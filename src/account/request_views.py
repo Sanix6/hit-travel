@@ -108,9 +108,34 @@ class RequestHotelView(views.APIView):
     def post(self, request, format=None):
         serializer = RequestHotelSerializer(data=request.data)
         if serializer.is_valid():
-            price = serializer.validated_data["price"] * float(Currency.objects.first().sell)
-            instance = serializer.save(user=request.user, price=price)
+            price_netto = serializer.validated_data["price"]
+            price = price_netto * float(Currency.objects.first().sell)
+            
+            nights = serializer.validated_data.get("nights")
+            flydate = serializer.validated_data.get("flydate")
+            placement = serializer.validated_data.get("placement")
+            adults = serializer.validated_data.get("adults", 1)
+            child = serializer.validated_data.get("child", 0)
+            mealcode = serializer.validated_data.get("mealcode")
+            mealrussian = serializer.validated_data.get("mealrussian")
+            meal = serializer.validated_data.get("meal")
+            
+            instance = serializer.save(
+                user=request.user,
+                price=price,
+                price_netto=price_netto,
+                nights=nights,
+                flydate=flydate,
+                placement=placement,
+                adults=adults,
+                child=child,
+                mealcode=mealcode,
+                mealrussian=mealrussian,
+                meal=meal
+            )
+            
             hotel_lead(serializer.data, request.user)
+            
             transaction = Transaction.objects.create(
                 status="processing",
                 name="hotel",
@@ -119,24 +144,23 @@ class RequestHotelView(views.APIView):
                 amount=price,
                 rid=Transaction.generate_unique_code()
             )
+            
             instance.payler_url = f"https://sandbox.payler.com/gapi/Pay?session_id={transaction.id}"
             instance.transaction_id = transaction.id
             instance.save()
-
+            
             deeplink = f"https://app.mbank.kg/deeplink?service=67ec3602-7c44-415c-a2cd-08d3376216f5&PARAM1={transaction.rid}&amount={int(price)}"
-
-            hotelcode = instance.hotelcode  
-            create_hotel_service(hotelcode, data=serializer.validated_data)
-
+            
             return Response({
-                "response": True, 
-                "deeplink": deeplink, 
-                "amount": transaction.amount, 
-                "data": RequestHotelSerializer(instance).data, 
+                "response": True,
+                "deeplink": deeplink,
+                "amount": transaction.amount,
+                "data": RequestHotelSerializer(instance).data,
                 "transaction_id": transaction.id,
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def get(self, request, format=None):
         user_requests = RequestHotel.objects.filter(user=request.user).order_by("-id")
@@ -144,7 +168,7 @@ class RequestHotelView(views.APIView):
         combined_data = []
 
         for item in serializer.data:
-            url = f"http://tourvisor.ru/xml/hotel.php?format=json&authlogin={self.authlogin}&authpass={self.authpass}&hotelcode={item['hotelcode']}"
+            url = f"http://tourvisor.ru/xml/hotel.php?format=json&authlogin={self.authlogin}&authpass={self.authpass}&hotelcode={item['hotelid']}"
             response = requests.get(url)
             if response.status_code == 200:
                 data_from_url = response.json()
@@ -180,3 +204,4 @@ class HotelDetail(views.APIView):
         else:
             return Response({"error": "Ошибка при получении данных отеля"}, status=response.status_code)
         
+

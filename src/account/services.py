@@ -119,13 +119,6 @@ def create_dogovor(instance):
         save=True,
     )
 
-LOG_FILE = "service_creation.log"
-
-def log_message(message):
-    with open(LOG_FILE, "a") as log:
-        log.write(f"{datetime.now()} - {message}\n")
-
-
 def add_tourist(travelers):
     url = f"https://api.u-on.ru/{KEY}/user/create.json"  
     tourist_ids = []
@@ -146,6 +139,65 @@ def add_tourist(travelers):
             return None  
 
     return tourist_ids
+
+
+
+def create_avia_from_tour(tour_data, service_id):
+    url = f"https://api.u-on.ru/{KEY}/avia/create.json"
+    
+    book_class_map = {
+        "Y": "Эконом",
+        "C": "Бизнес класс",
+        "F": "Первый класс",
+    }
+
+    flights = tour_data.get("flights", [])
+    if not flights:
+        logging.error("Данные о перелетах отсутствуют.")
+        return False
+
+    forward_flight = flights[0].get("forward", [])[0]
+    if not forward_flight:
+        logging.error("Данные о рейсе туда отсутствуют.")
+        return False
+
+    backward_flight = flights[0].get("backward", [])[0]
+    if not backward_flight:
+        logging.error("Данные о рейсе обратно отсутствуют.")
+        return False
+
+    try:
+        r_data = {
+            "service_id": service_id,
+            "at_dat_begin": forward_flight["departure"]["date"],
+            "at_time_begin": forward_flight["departure"]["time"],
+            "at_dat_end": backward_flight["departure"]["date"],
+            "at_time_end": backward_flight["departure"]["time"],
+            "at_flight_number": forward_flight["number"],
+            "at_course_begin": forward_flight["departure"]["port"]["name"],
+            "at_course_end": forward_flight["arrival"]["port"]["name"],
+            "at_class": book_class_map.get(forward_flight["class"], "Неизвестный класс"),
+            "at_type": "RT",  
+            "at_duration": None,  
+            "at_baggage": forward_flight["baggage"],
+            "provider": tour_data.get("operatorname", "Неизвестный оператор"),
+            "at_code_begin": forward_flight["departure"]["port"]["id"],
+            "at_code_end": forward_flight["arrival"]["port"]["id"],
+        }
+
+        logging.info(f"Request data for create_avia: {r_data}")
+
+        response = requests.post(url, json=r_data)
+        if response.status_code == 200:            
+            logging.info("Создание авиатранспорта прошло успешно.")
+            return True
+        else:
+            logging.error(f"Ошибка при создании авиатранспорта: {response.text}")
+            return False
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Ошибка запроса в create_avia: {e}")
+        return False
+
 
 def create_service(request_number, data=None, instance=None):
     url = f"https://api.u-on.ru/{KEY}/service/create.json"
@@ -185,17 +237,18 @@ def create_service(request_number, data=None, instance=None):
         "hotel_type": tour_data.get("room", ""),
         "price": tour_data.get("price"),
         "currency": tour_data.get("currency", ""),
-        "currency_id": 2,
-        "currency_id_netto": 2,
+        "currency_id": 3,
+        "currency_id_netto": 3,
     }
 
     response = requests.post(url, data=post_data)
     if response.status_code == 200:
+        service_id = response.json().get('id')
+        create_avia_from_tour(tour_data, service_id)
         return response.json()
     else:
         return False
     
-
 def create_lead(data, user, instance=None):
     url = f"https://api.u-on.ru/{KEY}/request/create.json"
     note = f"Оператор: {data.get('operatorlink', 'Unknown')},\n"
@@ -221,15 +274,20 @@ def create_lead(data, user, instance=None):
     if not tour_data:
         return False
 
-    flydate = tour_data.get("flydate", "")
-    enddate = tour_data.get("enddate", "")
-    currency = tour_data.get("currency", "")
+    flydate_str = tour_data.get("flydate", "")
+    nights = int(tour_data.get("nights", 0))
+
+    try:
+        flydate = datetime.strptime(flydate_str, "%d.%m.%Y")
+        datebackward = (flydate + timedelta(days=nights)).strftime("%d.%m.%Y")
+    except ValueError:
+        datebackward = "" 
 
     r_data = {
         "r_dat": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "r_dat_begin": flydate,
-        "r_date_end": enddate,
-        "currency": currency,
+        "r_dat_begin": flydate_str,
+        "r_dat_end": datebackward,
+        "currency": tour_data.get("currency", ""),
         "r_co_id": 3,
         "r_tour_operator_id": 117,
         "r_travel_type_id": 2,
@@ -243,14 +301,18 @@ def create_lead(data, user, instance=None):
         "tourists": []
     }
 
+    with open("r_data.log", "a", encoding="utf-8") as log_file:
+        log_file.write(f"r_data: {r_data}\n")
+
     travelers = data.get("travelers", [])
     for traveler in travelers:
         r_data["tourists"].append({
             "u_name": traveler.get("first_name"),
             "u_surname": traveler.get("last_name"),
             "u_birthday": traveler.get("dateofborn"),
-            "u_passport_number": traveler.get("passport_id"),
-            "u_passport_taken": traveler.get("issued_by")
+            "u_zagran_number": traveler.get("passport_id"),
+            "u_zagran_organization": traveler.get("issued_by"),
+            "u_tk_id": tour_data.get("adults", 0),
         })
 
     res = requests.post(url, json=r_data)
@@ -265,7 +327,6 @@ def create_lead(data, user, instance=None):
     else:
         return False
 
-    
 
 def decrease_bonuses(bcard_id, bonuses, reason):
     url = f"https://api.u-on.ru/{KEY}/bcard-bonus/create.json"

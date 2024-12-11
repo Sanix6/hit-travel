@@ -206,6 +206,16 @@ class BookingView(APIView):
         segments = flight_detail.get("data", {}).get("search", {}).get("segments", [])
         segments_date = flight_detail.get("data", {}).get("flight", {}).get("segments", [])
 
+        partner_affiliate_fee = (
+            flight_detail
+            .get("data", {})
+            .get("flight", {})
+            .get("price", {})
+            .get("KGS", {})
+            .get("agent_mode_prices", {})
+            .get("total_partner_affiliate_fee", 0)  
+        )
+
         flight_request = FlightRequest.objects.create(
             url=urlencode(parameters),
             user=request.user,
@@ -222,6 +232,7 @@ class BookingView(APIView):
             adt = flight_detail["data"]["search"]['adt'],
             chd = flight_detail["data"]["search"]['chd'],
             inf = flight_detail["data"]["search"]['adt'],
+            partner_affiliate_fee=partner_affiliate_fee,
             
         )
 
@@ -279,6 +290,8 @@ class BookingView(APIView):
         deeplink = f"https://app.mbank.kg/deeplink?service=67ec3602-7c44-415c-a2cd-08d3376216f5&PARAM1={transaction.rid}&amount={amount}"
         
         booking_result = booking(token, flight_request.url, flight_request.id)
+        flight_request.refresh_from_db()
+
 
         if booking_result is True:
             create_request(data=flight_request, user=request.user)
@@ -287,6 +300,7 @@ class BookingView(APIView):
                 "deeplink": deeplink,
                 "amount": amount,
                 "data": FlightsSerializer(flight_request, context={"request_type": None}).data,
+                "adt": flight_request.adt, 
                 "transaction_id": transaction.id
             })
         else:

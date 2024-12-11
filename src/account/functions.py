@@ -3,6 +3,7 @@ from django.conf import settings
 from datetime import datetime, timedelta
 from .services import add_tourist
 import logging
+from .models import *
 import redis
 import json
 
@@ -17,114 +18,90 @@ UON_URL = f"https://api.u-on.ru/{KEY}/service/create.json"
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 
 
-def create_hotel_service(hotelcode, data=None):
-    redis_key = f"hotel:{hotelcode}"
-    
-    hotel_data = redis_client.get(redis_key)
-    if not hotel_data:
-        logging.error(f"Ключ {redis_key} отсутствует в Redis.")
-        return False
 
-    try:
-        hotel_data = json.loads(hotel_data)
-    except json.JSONDecodeError as e:
-        logging.error(f"Ошибка декодирования JSON для ключа {redis_key}: {e}")
-        return False
-
-    logging.info(f"Данные из Redis успешно извлечены для hotelcode={hotelcode}")
+def create_hotel_service(request_number, data=None):
+    hotel_id = data.get("id") 
+    request_hotel = RequestHotel.objects.get(id=hotel_id) 
     
-    hotel_name = hotel_data.get('hotelname', 'Unknown')
-    hotel_stars = hotel_data.get('hotelstars', 'N/A')
-    country = hotel_data.get('countryname', 'Unknown')
-    region = hotel_data.get('regionname', 'Unknown')
+    tour_response = requests.get(
+        f"http://tourvisor.ru/xml/hotel.php?authlogin={AUTHLOGIN}&authpass={AUTHPASS}&format=json&hotelcode={request_hotel.hotelid}"
+    )
+    tour_data = tour_response.json()["data"]["hotel"]
 
-    tours_info = "" 
-    
-    post_data = {
-        # "r_id": data.get('id', None),
+    uon_data = {
+        "r_id": request_number,
         "type_id": 12,
-        "description": (
-            f"Название отеля: {hotel_name}\n"
-            f"Рейтинг: {hotel_stars} звезд\n"
-            f"Страна: {country}\n"
-            f"Регион: {region}\n"
-            f"{tours_info}" 
-        ),
-        "date_begin": None, 
-        "country": country,
-        "city": region,
-        "hotel": hotel_name,
-        "hotel_type": hotel_stars,
-        "nutrition": None,  
-        "price": None,  
-        "currency": "EUR",
-        "currency_id": 2,
-        "currency_id_netto": 2,
+        "description": f"Отель: {tour_data['name']}\nГород: {tour_data['region']}",
+        "country": tour_data["country"],
+        "city": tour_data["region"],
+        "hotel": tour_data["name"],
+        "price": request_hotel.price_netto,  
+        "currency_id": 3,
+        "tourists_count": request_hotel.adults,
     }
-    print(post_data)
 
-    url = f"https://api.u-on.ru/{KEY}/service/create.json"
-    try:
-        response = requests.post(url, json=post_data)
+    response = requests.post(f"https://api.u-on.ru/{KEY}/service/create.json", data=uon_data)
+    response.status_code == 200
+
+def add_tourist(travelers):
+    url = f"https://api.u-on.ru/{KEY}/user/create.json"  
+    tourist_ids = []
+
+    for user in travelers:
+        tourist_data = {
+            "u_name": user.get("first_name"),
+            "u_surname": user.get("last_name"),
+            "u_phone": user.get("phone"),  
+            "u_email": user.get("email"),
+        }
+
+        response = requests.post(url, json=tourist_data)
         if response.status_code == 200:
-            logging.info(f"Запрос к U-ON API успешен для hotelcode={hotelcode}, ответ: {response.json()}")
+            response_json = response.json()
+            tourist_ids.append(response_json.get("id"))
         else:
-            logging.error(f"Ошибка запроса к U-ON API для hotelcode={hotelcode}: {response.status_code}, текст ошибки: {response.text}")
-    except requests.RequestException as e:
-        logging.error(f"Ошибка соединения с U-ON API для hotelcode={hotelcode}: {e}")
+            return None  
 
-    return True
+    return tourist_ids
+       
 
-
-    
-def hotel_lead(data, user, instance=None):
+def hotel_lead(data, user):
     url = f"https://api.u-on.ru/{KEY}/request/create.json"
-    
-    hotel_code = data.get("hotelcode") 
-    if not hotel_code:
-        logging.error("Отсутствует hotelcode")
-        print(hotel_code)
-        return False
-    
-    note = f"Заявки на отель\n"
-    
-    travelers = data.get("travelers", [])
-    tourist_ids = add_tourist(travelers) 
+    note = f"Заявки на отель №{data['hotelid']}"
+
     r_data = {
-        "r_id_internal": data.get("id"),
-        "description": note, 
+        # "r_id_internal": data.get("id"),
+        "description": note,
         "r_dat": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "r_dat_begin": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "r_co_id": 3,
         "r_tour_operator_id": 117,
-        "r_travel_type_id": 7, 
+        "r_travel_type_id": 7,
         "r_cl_id": user.tourist_id,
         "u_name": data.get("first_name"),
         "u_phone": data.get("phone"),
         "u_email": data.get("email"),
         "note": note,
         "source": "Мобильное приложение",
-        "tourists": [
-            {
-                "u_name": traveler.get("first_name"),
-                "u_surname": traveler.get("last_name"),
-                "u_birthday": traveler.get("dateofborn"),
-                "u_passport_number": traveler.get("passport_id"),
-                "u_passport_taken": traveler.get("issued_by")
-            } for traveler in travelers
-        ]
+        "tourists": []
     }
-    print(r_data)
 
-    response = requests.post(url)
+    travelers = data.get("travelers", [])
+    for traveler in travelers:
+        r_data["tourists"].append({
+            "u_name": traveler.get("first_name"),
+            "u_surname": traveler.get("last_name"),
+            "u_birthday": traveler.get("dateofborn"),
+            "u_passport_number": traveler.get("passport_id"),
+            "u_passport_taken": traveler.get("issued_by")
+        })
+
+    response = requests.post(url, json=r_data)
 
     if response.status_code == 200:
         response_data = response.json()
-        data['id'] = response_data.get('id')
-
-        create_hotel_service(hotel_code, data=data) 
-
-        return response_data
+        create_hotel_service(response_data["id"], data=data)
+        add_tourist(travelers)
+        return True
     else:
-        logging.error(f"Ошибка запроса к U-ON API: {response.status_code}, текст ошибки: {response.text}")
         return False

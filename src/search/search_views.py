@@ -9,53 +9,22 @@ from src.main.models import Currency
 from .services import get_isfavorite, get_isrequested, get_requestedhotel
 from redis import Redis
 import json
+from .utils import get_search_result, convert_currency, fetch_result_data
 
-redis_client = Redis(host='localhost', port=6379, db=0)
 
 class SearchView(APIView):
     authlogin = settings.AUTHLOGIN
     authpass = settings.AUTHPASS
-
-    def get_search_result(self, query_params):
-        search_url = (
-            f"http://tourvisor.ru/xml/search.php?format=json"
-            f"&authlogin={self.authlogin}&authpass={self.authpass}"
-        )
-
-        for param, value in query_params.items():
-            if param == 'directOnly' and value == 'true':
-                param = 'hideregular'
-                value = 1
-            search_url += f"&{param}={value}"
-
-        requestid_response = requests.get(search_url)
-
-        if requestid_response.status_code != 200:
-            return Response({"response": False})
-
-        try:
-            return requestid_response.json().get("result", {}).get("requestid")
-        except KeyError:
-            return Response({"response": False})
-
-    def save_hotel_data_to_redis(self, requestid, hotels):
-        redis_key = f"search_result:{requestid}"
-        redis_client.set(redis_key, json.dumps(hotels), ex=600) 
-
-        for hotel in hotels:
-            hotel_key = f"hotel:{hotel['hotelid']}"
-            redis_client.set(hotel_key, json.dumps(hotel), ex=600)
-
 
     def get(self, request):
         query_params = request.query_params
         currency = query_params.get("currency")
 
         if currency == "99":
-            mutable_query_params = query_params.copy()
             usd_exchange = Currency.objects.get(currency="USD").purchase
             eur_exchange = Currency.objects.get(currency="EUR").purchase
 
+            mutable_query_params = query_params.copy()
             pricefrom = int(query_params.get("pricefrom", 0))
             priceto = int(query_params.get("priceto", 0))
             page = query_params.get("page", 1)
@@ -64,64 +33,32 @@ class SearchView(APIView):
             mutable_query_params["priceto"] = priceto / usd_exchange
             mutable_query_params["currency"] = "1"
 
-            requestid = self.get_search_result(mutable_query_params)
+            requestid = get_search_result(self.authlogin, self.authpass, mutable_query_params)
+            if not requestid:
+                return Response({"response": False}, status=400)
+
             time.sleep(6)
 
-            url = (
-                f"http://tourvisor.ru/xml/result.php?format=json&requestid={requestid}"
-                f"&authlogin={self.authlogin}&authpass={self.authpass}&page={page}"
-            )
+            data = fetch_result_data(self.authlogin, self.authpass, requestid, page)
+            if not data:
+                return Response({"response": False}, status=400)
 
-            response = requests.get(url)
+            converted_data = convert_currency(data, usd_exchange, eur_exchange)
+            return Response(converted_data)
 
-            if response.status_code != 200:
-                return Response({"response": False})
-
-            data = response.json()
-            hotels = data.get("data", {}).get("result", {}).get("hotel", [])
-            
-            # Обновление цен в KGS
-            for hotel in hotels:
-                if hotel["currency"] == "USD":
-                    hotel["currency"] = "KGS"
-                    hotel["price"] = int(hotel["price"] * usd_exchange)
-                    for tour in hotel["tours"]["tour"]:
-                        tour["currency"] = "KGS"
-                        tour["price"] = int(tour["price"] * usd_exchange)
-                elif hotel["currency"] == "EUR":
-                    hotel["currency"] = "KGS"
-                    hotel["price"] = int(hotel["price"] * eur_exchange)
-                    for tour in hotel["tours"]["tour"]:
-                        tour["currency"] = "KGS"
-                        tour["price"] = int(tour["price"] * eur_exchange)
-
-            self.save_hotel_data_to_redis(requestid, hotels)
-
-            return Response(data)
         else:
-            requestid = self.get_search_result(query_params)
+            requestid = get_search_result(self.authlogin, self.authpass, query_params)
+            if not requestid:
+                return Response({"response": False}, status=400)
+
             page = query_params.get("page", 1)
+            time.sleep(6)  
 
-            time.sleep(6)
-
-            url = (
-                f"http://tourvisor.ru/xml/result.php?format=json&requestid={requestid}"
-                f"&authlogin={self.authlogin}&authpass={self.authpass}&page={page}"
-            )
-
-            response = requests.get(url)
-
-            if response.status_code != 200:
-                return Response({"response": False})
-
-            data = response.json()
-            hotels = data.get("data", {}).get("result", {}).get("hotel", [])
-
-            self.save_hotel_data_to_redis(requestid, hotels)
+            data = fetch_result_data(self.authlogin, self.authpass, requestid, page)
+            if not data:
+                return Response({"response": False}, status=400)
 
             return Response(data)
-        
-
 
 class FilterParams(APIView):
     def get(self, request):

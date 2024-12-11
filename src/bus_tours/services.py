@@ -9,16 +9,11 @@ KEY = settings.KEY
 def create_service(data, user, request_number):
     url = f"https://api.u-on.ru/{KEY}/service/create.json"
 
-    tour_data = data.get('tour')
-    if not isinstance(tour_data, dict):
-        tour_data = {}  
-
     service_data = {
         "r_id": request_number,
         "type_id": 17,
         "description": f"Автобусный тур: {data['title']}\nСсылка: ",
-        "at_dat_begin": tour_data.get('datefrom'),
-        "at_dat_end": tour_data.get('dateto'),
+        "nights": data.get('nights'),
         "country": data.get("country"),
         "city": data.get("city"),
         "nutrition": data.get("meal"),
@@ -44,6 +39,8 @@ def send_bustour_request(data, user):
     r_data = {
         "r_dat": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "r_cl_id": user.tourist_id,
+        "r_dat_begin": data['datefrom'],
+        "r_dat_end": data['dateto'],
         "u_surname": data["last_name"],
         "u_name": data["first_name"],
         "u_phone": data["phone"],

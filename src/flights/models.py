@@ -41,6 +41,7 @@ class FlightRequest(models.Model):
     amount = models.FloatField(_("Сумма для платежа"))
     paid = models.FloatField(_("Всего оплачено"), blank=True, null=True)
     book_class = models.CharField(_("Класс"), choices=BOOK_CLASS_CHOICE, max_length=250)
+    partner_affiliate_fee = models.DecimalField(_("Комиссия партнера"), max_digits=10, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(_("Дата создания"), auto_now_add=True)
     sent_notification = models.BooleanField(default=False, editable=False)
     begin_date = models.DateField(editable=True, blank=True, null=True)

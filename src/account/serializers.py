@@ -379,10 +379,15 @@ class RequestHotelSerializer(serializers.ModelSerializer):
     amount = serializers.SerializerMethodField(read_only=True)
     payler_url = serializers.SerializerMethodField(read_only=True)
     travelers = HotelTravelerSerializer(many=True, required=False)
-
+    
     class Meta:
         model = RequestHotel
-        fields = ['id', 'hotelcode', 'first_name', 'phone', 'email', 'price', 'paid', 'amount', 'currency', 'deeplink', 'payler_url', "travelers"]
+        fields = [
+            'id', 'hotelid', 'first_name', 'phone', 'email', 'price', 'paid', 
+            'amount', 'currency', 'deeplink', 'payler_url', 'travelers', 
+            'nights', 'flydate', 'placement', 'adults', 'child', 'mealcode', 
+            'mealrussian', 'meal'
+        ]
 
     def get_deeplink(self, obj):
         if self.context.get("type") == "detail": 
@@ -392,7 +397,13 @@ class RequestHotelSerializer(serializers.ModelSerializer):
             except Transaction.DoesNotExist:
                 pass
         return None
+
+    def get_amount(self, obj): 
+        return obj.price
     
+    def get_payler_url(self, obj): 
+        return obj.payler_url
+
     def create(self, validated_data):
         try:
             travelers_list = validated_data.pop("travelers", [])
@@ -401,15 +412,10 @@ class RequestHotelSerializer(serializers.ModelSerializer):
             instance = RequestHotel.objects.create(**validated_data)
             for traveler in travelers_list:
                 instance.travelers.create(**traveler)
+            
             return instance
         except KeyError:
             return super().create(validated_data)
-
-    def get_amount(self, obj): 
-        return obj.price
-    
-    def get_payler_url(self, obj): 
-        return obj.payler_url
 
 
 
@@ -435,3 +441,15 @@ class ManualRequestsSerializer(serializers.ModelSerializer):
         
         instance.data = data[0]
         return super().to_representation(instance)
+    
+
+class ExtendedFieldSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=True)
+    section = serializers.IntegerField(required=True)
+    name = serializers.CharField(max_length=255, required=True)
+    type = serializers.IntegerField(required=False, default=1)
+    options = serializers.ListField(
+        child=serializers.CharField(max_length=255), 
+        required=False, 
+        allow_empty=True
+    )

@@ -487,26 +487,3 @@ class GetUserView(views.APIView):
             return Response({"response": False})
         return Response({"response": False})
 
-
-from rest_framework.exceptions import APIException
-import json
-
-
-class CatalogServiceAPIView(views.APIView):
-    API_URL = 'https://api.u-on.ru/{key}/catalog-service/{page}.{_format}'
-
-    def get(self, request, page, _format='json'):
-        key = 'RxH3WeM378er81w4dMuF1649063416'  
-        api_url = self.API_URL.format(key=key, page=page, _format=_format)
-
-        try:
-            response = requests.get(api_url)
-            response.raise_for_status() 
-            if _format == 'json':
-                data = response.json()
-            else:
-                data = response.text
-        except requests.RequestException as e:
-            raise APIException(f"External API error: {e}")
-
-        return Response(data, status=status.HTTP_200_OK)

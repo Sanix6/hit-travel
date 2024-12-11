@@ -30,6 +30,20 @@ logging.basicConfig(
 
 logging.basicConfig(level=logging.INFO)
 
+
+def get_u_tk_id(passenger):
+    if passenger.age == "adt":
+        return 1 
+    elif passenger.age == "chd":
+        return 4  
+    elif passenger.age in ("inf", "ins"):
+        return 5  
+    elif passenger.age == "src":
+        return 1  
+    elif passenger.age == "yth":
+        return 1
+    return 1
+
 def create_avia(service_id, data):
     url = f"https://api.u-on.ru/{KEY}/avia/create.json"
     
@@ -81,24 +95,27 @@ def create_avia(service_id, data):
         return False
 
 
-
 def create_service(request_number, data):
     url = f"https://api.u-on.ru/{KEY}/service/create.json"
     first_segment = data.segments.first()
     if not first_segment:
         raise ValueError("Нет доступных сегментов для создания сервиса.")
 
+    chd_count = getattr(data, 'chd', 0)
+    inf_count = getattr(data, 'inf', 0)
+    adt_count = getattr(data, 'adt', 0)
+
     r_data = {
         "r_id": request_number,
         "type_id": 6,
-        "description": f"Авиаперелет, Город вылета {first_segment.from_name}: Город прибытие {first_segment.to_name}, время в пути в минутах {first_segment.duration_minute}, время в пути в часах {first_segment.duration_hour}",
+        "description": f"Авиаперелет, Город вылета {first_segment.from_name}: Город прибытия {first_segment.to_name}, время в пути в минутах {first_segment.duration_minute}, время в пути в часах {first_segment.duration_hour}",
         "country": first_segment.from_country,
         "city": first_segment.from_name,
         "price": data.amount,
         "route": f"{first_segment.from_name} -> {first_segment.to_name}",
-        "tr_count": data.adt,
-        "tr_child_count": data.chd,
-        "tr_baby_count": data.inf,
+        "tourists_count": adt_count, 
+        "tourists_child_count": chd_count,  
+        "tourists_baby_count": inf_count,  
         "dat_begin": first_segment.date_from,
         "dat_end": first_segment.date_to,
     }
@@ -109,6 +126,7 @@ def create_service(request_number, data):
         create_avia(service_id, data)
     else:
         raise ValueError(f"Ошибка при создании сервиса: {response.text}")
+
 
 def add_tourist_avia(passengers):
     url = f"https://api.u-on.ru/{KEY}/user/create.json"
@@ -135,12 +153,12 @@ def add_tourist_avia(passengers):
 def create_request(data, user):
     url = f"https://api.u-on.ru/{KEY}/request/create.json"
 
-    passengers = data.passengers.all()  
+    passengers = data.passengers.all()
 
     passenger_ids = add_tourist_avia(passengers)
 
     r_data = {
-        "reservation_number": data.billing_number, 
+        "r_reservation_number": data.billing_number,
         "r_dat": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "r_co_id": 3,
         "r_tour_operator_id": 117,
@@ -157,39 +175,42 @@ def create_request(data, user):
                 "u_name": passenger.first_name,
                 "u_surname": passenger.last_name,
                 "u_birthday": passenger.birthdate.strftime("%Y-%m-%d") if passenger.birthdate else None,
-                "u_passport_number": passenger.docnum,
-                "u_passport_taken": passenger.docexp.strftime("%Y-%m-%d") if passenger.docexp else None,
+                "u_zagran_number": passenger.docnum,
+                "u_zagran_expire": passenger.docexp.strftime("%Y-%m-%d") if passenger.docexp else None,
+                "u_tk_id": get_u_tk_id(passenger),  
             }
             for passenger in passengers
         ]
     }
 
-    response = requests.post(url, json=r_data) 
+    response = requests.post(url, json=r_data)
     if response.status_code == 200:
         create_service(response.json()["id"], data=data)
     else:
         print(f"Error creating request: {response.status_code}, {response.text}")
 
-
+        
 @app.task()
 def booking(token, book_url, id):
-    url = f"{AVIA_URL}/avia/book?auth_key={str(token)}&{str(book_url)}"
+    flight = FlightRequest.objects.get(id=id)
+    partner_affiliate_fee = flight.partner_affiliate_fee or 0 
+
+    url = f"{AVIA_URL}/avia/book?auth_key={str(token)}&{str(book_url)}&partner_affiliate_fee={partner_affiliate_fee}"
+
     response = requests.get(url)
+
     with open("example.txt", "a") as file:
         file.write(f"{response.json()}\n\n")
-    
-    if response.json()["success"] == True:
-        billing_number = str(response.json()["data"]["book"]["order"]["billing_number"])
-        partner_affiliate_fee = response.json()["data"]["book"].get('partner_affiliate_fee', 0) 
 
-        flight = FlightRequest.objects.get(id=id)
+    if response.json().get("success") == True:
+        billing_number = str(response.json()["data"]["book"]["order"]["billing_number"])
+        
         flight.billing_number = billing_number
-        flight.partner_affiliate_fee = partner_affiliate_fee  
         flight.save()
 
         return True
     else:
-        return str(response.json()["data"]["message"])
+        return response.json()["data"].get("message", "Unknown error")
 
 @app.task()
 def ticketed(token, id):

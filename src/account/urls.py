@@ -46,6 +46,5 @@ urlpatterns = [
     
     # FAQ
     path("faq", FAQAPIView.as_view(), name="faq"),
-    path('api/catalog-service/<int:page>/', CatalogServiceAPIView.as_view(), name='catalog_service'),
 
 ]

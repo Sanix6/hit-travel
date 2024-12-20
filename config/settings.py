@@ -1,9 +1,10 @@
 import os
 from datetime import timedelta
 from pathlib import Path
-from dotenv import load_dotenv
+
 import dj_database_url
 import requests
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -86,7 +87,9 @@ LOGIN_REDIRECT_UR = "/admin"
 
 DATABASES = {
     # 'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
-    'default': dj_database_url.config(default="postgresql://chyngyz:dpDvaT%23tuJawi4%2BLNU@localhost:5432/hittraveldb")
+    "default": dj_database_url.config(
+        default="postgresql://chyngyz:dpDvaT%23tuJawi4%2BLNU@localhost:5432/hittraveldb"
+    )
 }
 
 
@@ -148,12 +151,12 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',  
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
     }
 }
 

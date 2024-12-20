@@ -1,25 +1,34 @@
+# Standard library imports
+from datetime import datetime, timedelta
+from urllib.parse import urlencode
+import requests
+import json
+import logging
+from concurrent.futures import ThreadPoolExecutor
+
+# Third-party imports
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
-from urllib.parse import urlencode
-import requests
-from datetime import datetime, timedelta
-from django.http import JsonResponse
-from concurrent.futures import ThreadPoolExecutor
-import json
-import logging
-from src.payment.models import Transaction
+import redis
 
-from src.flights.models import AirProviders, FlightRequest, Passengers, Segments, FlightCancel
+# Django imports
+from django.conf import settings
+
+# Application-specific imports
+from src.flights.models import FlightRequest, Passengers, Segments, FlightCancel
 from src.flights.serializers import FlightsSerializer, CancelBookingSerializer, RefundAmountSerializer
 from src.flights.services import create_request, booking
-import redis
-from django.conf import settings
 from src.flights.tasks import *
+from src.payment.models import Transaction
+from .services import *
+from .functions import *
 
 
 avia_center_url = settings.AVIA_URL
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=1)
+
 
 class SearchParamsViewV3(APIView):
     def get(self, request):
@@ -48,100 +57,40 @@ class SearchParamsView(APIView):
         response["cities"] = cities_list
         return Response(response)
 
-
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=1)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler('flights_search_view.log')
-file_handler.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-
-
-
 class FlightsSearchView(GenericAPIView):
-
     def get(self, request):
         try:
-            redis_client = redis.StrictRedis(host='localhost', port=6379, db=1)
-            token = redis_client.get('token').decode("utf-8")
-        except Exception as e:
-            return Response({"message": "Failed to connect to Redis or retrieve token"}, status=500)
-        
+            token = get_redis_token()
+        except ConnectionError as e:
+            return Response({"message": str(e)}, status=500)
+
+        avia_center_url = "https://avia.example.com"
         encoded_params = urlencode(request.query_params, safe='[]')
         url = f"{avia_center_url}/avia/search-recommendations?auth_key={token}&{encoded_params}"
         response = requests.get(url.encode("utf-8"))
         response_data = response.json().get("data", {})
+
         is_refund_filter = request.query_params.get('is_refund', 'false').lower() == 'true'
         is_baggage_filter = request.query_params.get('is_baggage', 'false').lower() == 'true'
 
         flights = response_data.get('flights', [])
-        filtered_flights = []
-
-        for flight in flights:
-            if is_refund_filter:
-                if flight.get('is_refund') == False:
-                    continue
-
-            if is_baggage_filter:
-                if flight.get('is_baggage') == False:
-                    continue
-
-            provider = flight.get('provider', {})
-            supplier = provider.get('supplier', {})
-            title = supplier.get('title', '')
-            code = supplier.get('code', '')
-
-            if title and code:
-                air_provider, created = AirProviders.objects.get_or_create(
-                    title=title,
-                    defaults={'code': code}
-                )
-                supplier['logo'] = "https://hit-travel.org/" + f"{air_provider.img.url}" if air_provider.img else None
-                filtered_flights.append(flight)
-                
+        filtered_flights = filter_flights(flights, is_refund_filter, is_baggage_filter)
 
         flight_date = datetime.strptime(request.query_params.get('segments[0][date]'), '%d.%m.%Y')
-
-        def fetch_nearest_flights(offset):
-            nearest_date = (flight_date + timedelta(days=offset)).strftime('%d.%m.%Y')
-            nearest_params = request.query_params.copy()
-            nearest_params['segments[0][date]'] = nearest_date
-            nearest_encoded_params = urlencode(nearest_params, safe='[]')
-            nearest_url = f"{avia_center_url}/avia/search-recommendations?auth_key={token}&{nearest_encoded_params}&count=1"
-            nearest_response = requests.get(nearest_url.encode("utf-8"))
-            nearest_data = nearest_response.json().get("data", {})
-            nearest_flight = nearest_data.get('flights', [])[0] if nearest_data.get('flights') else None
-
-            if nearest_flight:
-                return {
-                    "date": nearest_date,
-                    "price": nearest_flight.get('price', {}).get('KGS', {}).get('amount', 0)
-                }
-            return None
-
         offsets = range(-2, 3)
-        with ThreadPoolExecutor() as executor:
-            nearest_flights = list(filter(None, executor.map(fetch_nearest_flights, offsets)))
 
-        nearest_flights_formatted = []
-        days_of_week = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
-        original_date = datetime.strptime(request.query_params.get('segments[0][date]'), '%d.%m.%Y')
-        for nearest_flight in nearest_flights:
-            flight_date = datetime.strptime(nearest_flight["date"], '%d.%m.%Y')
-            nearest_flights_formatted.append({
-                "date": f"{flight_date.day} {flight_date.strftime('%b')}, {days_of_week[flight_date.weekday()]}",
-                "price": f"{nearest_flight['price']} сом",
-                "active_day": (flight_date == original_date)
-            })
+        with ThreadPoolExecutor() as executor:
+            nearest_flights = list(filter(None, executor.map(
+                lambda offset: fetch_nearest_flights(offset, avia_center_url, token, request.query_params, flight_date),
+                offsets
+            )))
+
+        nearest_flights_formatted = format_nearest_flights(nearest_flights, flight_date)
 
         response_data['flights'] = filtered_flights
         response_data['nearest'] = nearest_flights_formatted
 
         return Response(response_data)
-
 
 class FlightDetailView(APIView):
     def get(self, request, *args, **kwargs):

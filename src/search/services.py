@@ -13,7 +13,6 @@ def fetch_tourvisor_data(url):
         return {"error": f"Failed to fetch data: {str(e)}"}
 
 
-
 def update_country_name(country):
     if country.get("name") == "Киргизия": 
         country["name"] = "Кыргызстан"
@@ -29,7 +28,6 @@ def add_country_images(countries, db_countries):
 
 
 def fetch_tourvisor_data(url):
-    """Helper function to fetch data from the Tourvisor API and return JSON response."""
     try:
         response = requests.get(url)
         response.raise_for_status()

@@ -1,14 +1,16 @@
-from django.contrib import admin
-from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.shortcuts import render
+from django.urls import include, path
+
 from .yasg import doc_urlpatterns
 
-from django.shortcuts import render
 
 def index(request):
-    return render(request, 'not.html')
+    return render(request, "not.html")
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -21,7 +23,7 @@ urlpatterns = [
     path("", include("src.flights.urls")),
     path("webhook/", include("src.webhooks.urls")),
     path("ckeditor/", include("ckeditor_uploader.urls")),
-    path("", index)
+    path("", index),
 ]
 
 # urlpatterns += doc_urlpatterns

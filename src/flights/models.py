@@ -19,8 +19,8 @@ class AviaAgreement(models.Model):
         return f"Политика соглашения об авиабилетах"
 
 class AirProviders(models.Model):
-    code = models.CharField(_("Код"), max_length=150)
-    title = models.CharField(_("Название"), max_length=500)
+    code = models.CharField(_("Код"), max_length=150, unique=True)
+    title = models.CharField(_("Название"), max_length=500, unique=True)
     img = models.ImageField(_("Логотип"), upload_to="airlines", blank=True, null=True)
 
     class Meta:

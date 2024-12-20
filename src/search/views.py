@@ -85,8 +85,6 @@ class FavoriteToursListView(views.APIView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-
-
 class FlightsParamView(views.APIView):
     def get(self, request):
         instances = Countries.objects.exclude(img='')

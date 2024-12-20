@@ -16,15 +16,18 @@ class CustomNotification(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.sent:
+            super().save(*args, **kwargs)
             if self.all_users:
                 users = UserToken.objects.all()
             else:
                 users = self.selected_users.all()
+            user_tokens = [user.token for user in users]
             text = self.text
-            send_notification.delay(text, *users)
+            send_notification.delay(text, user_tokens) 
             print("Notification sent")
             self.sent = True
-        super().save(*args, **kwargs)
+
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return self.text
@@ -52,6 +55,9 @@ class TokenFCM(BaseModel):
         auto_now_add=True,
         verbose_name=_('Дата создания')
     )
+
+    def __str__(self):
+        return self.token
 
     class Meta:
         verbose_name = _('Токен')

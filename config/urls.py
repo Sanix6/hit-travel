@@ -5,6 +5,11 @@ from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from .yasg import doc_urlpatterns
 
+from django.shortcuts import render
+
+def index(request):
+    return render(request, 'not.html')
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("src.account.urls")),
@@ -16,9 +21,10 @@ urlpatterns = [
     path("", include("src.flights.urls")),
     path("webhook/", include("src.webhooks.urls")),
     path("ckeditor/", include("ckeditor_uploader.urls")),
+    path("", index)
 ]
 
-urlpatterns += doc_urlpatterns
+# urlpatterns += doc_urlpatterns
 urlpatterns += staticfiles_urlpatterns()
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

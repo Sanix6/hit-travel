@@ -85,7 +85,8 @@ AUTH_USER_MODEL = "account.User"
 LOGIN_REDIRECT_UR = "/admin"
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+    # 'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+    'default': dj_database_url.config(default="postgresql://chyngyz:dpDvaT%23tuJawi4%2BLNU@localhost:5432/hittraveldb")
 }
 
 
@@ -213,31 +214,3 @@ NIKITA_PASSWORD = os.getenv("NITKITA_PASSWORD")
 NIKITA_SENDER = os.getenv("NITKITA_SENDER")
 
 PAYLER_API_KEY = os.getenv("PAYLER_API_KEY")
-
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': 'flight_requests.log',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'flight_requests': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-    },
-}

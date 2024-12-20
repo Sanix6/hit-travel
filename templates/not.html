@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OneSignal Web Push Example</title>
+    <!-- <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js" async></script> -->
+     <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+
+     <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+            appId: "cdd2aecb-8204-4640-8396-36a3c5360179",
+            });
+        });
+        </script>
+        <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+        <script>
+          function setCookie(cname, cvalue, exdays) {
+              const d = new Date();
+              d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+              let expires = "expires=" + d.toUTCString();
+              document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+          }
+          window.OneSignal = window.OneSignal || [];
+          OneSignal.push(function() {
+              OneSignal.init({
+                  appId: "cdd2aecb-8204-4640-8396-36a3c5360179",
+                  allowLocalhostAsSecureOrigin: true
+              });
+          });
+          OneSignal.push(function() {
+              OneSignal.getUserId().
+              then(response => setCookie('onesignal_player_id', response, 365));
+          });
+        //   await OneSignal.getUserId();
+        </script>
+
+</head>
+<body>
+</body>
+</html>

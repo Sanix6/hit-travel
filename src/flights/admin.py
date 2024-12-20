@@ -17,6 +17,7 @@ admin.site.register(AviaAgreement, AviaAgreementAdmin)
 class AirProvidersAdmin(admin.ModelAdmin):
     list_display = ["id", "code", "title", "get_img"]
     list_display_links = list_display
+    search_fields = ('title', 'code')
 
     def get_img(self, obj):
         if obj.img:

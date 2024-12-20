@@ -1,33 +1,30 @@
 from django.conf import settings
 from onesignal_sdk.client import Client
 from src.flights.models import FlightRequest
-# from config.celery import app
 
 from celery import shared_task
 
 app_id = settings.ONESIGNAL_APPID
 rest_api = settings.ONESIGNAL_RESTAPI
 
-@shared_task()
-def send_notification(text, *users):
+@shared_task
+def send_notification(text, user_tokens):
     onesignal_client = Client(app_id=app_id, rest_api_key=rest_api)
 
     notification_data = {
-        "contents": {"en": f"{text}"},
-        "include_player_ids": [user.tokens.token.token for user in users]
+        "contents": {"en": text},
+        "include_player_ids": user_tokens
     }
+
     try:
         onesignal_response = onesignal_client.send_notification(notification_data)
-        response_data = {
-            "status": onesignal_response.status_code,
-            "body": onesignal_response.body
-        }
+        
         if onesignal_response.status_code == 200:
-            print("OneSignals - res: True")
+            print(f"Notification sent successfully: {onesignal_response}")
         else:
-            print("OneSignals - res: False")
+            print(f"Failed to send notification: {onesignal_response.status_code} - {onesignal_response}")
     except Exception as e:
-        print(f"{str(e)}")
+        print(f"Error while sending notification: {str(e)}")
 
 
 @shared_task()

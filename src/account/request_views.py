@@ -1,19 +1,14 @@
 import requests
-from datetime import datetime
 from rest_framework import generics, permissions, views, status
 from rest_framework.response import Response
-import json
 from django.conf import settings
 from .models import RequestTour, RequestHotel
 from .serializers import TourRequestSerializer, RequestHotelSerializer, PersonalInfoSerializer
-from .services import create_lead, decrease_bonuses
-from .functions import hotel_lead, create_hotel_service
-from django.core.files.base import ContentFile
-from django.template.loader import get_template
-import pdfkit
-from num2words import num2words
+from .services import create_lead
+from .functions import *
 from src.payment.models import Transaction
 from src.main.models import Currency
+
 
 
 class TourRequestView(generics.CreateAPIView):
@@ -25,79 +20,43 @@ class TourRequestView(generics.CreateAPIView):
         serializer = self.serializer_class(data=request.data)
         user = request.user
 
-        if serializer.is_valid():
-            tour_id = serializer.validated_data.get("tourid")
-            existing_tour_request = RequestTour.objects.filter(
-                tourid=tour_id, user=user
-            )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
 
-            if existing_tour_request.exists():
-                return Response({"response": False})
+        tour_id = serializer.validated_data.get("tourid")
+        if tour_request_exists(tour_id, user):
+            return Response({"response": False, "message": "Заявка уже существует"}, status=400)
 
-            serializer.save(user=request.user)
-            
-            res = create_lead(serializer.data, user)
-            if res:
-                tour_request = RequestTour.objects.get(tourid=tour_id, user=user)
-                tour_request.request_number = res["id"]
+        tour_request = serializer.save(user=user)
 
-                date = datetime.now().strftime("%d.%m.%Y %H:%M")
-                price_word = num2words(float(tour_request.price), lang="ru")
-                surcharge_word = num2words(int(tour_request.surcharge), lang="ru")
+        lead_response = create_lead(serializer.data, user)
+        if not lead_response:
+            return Response({"response": False, "message": "Ошибка создания лида"}, status=500)
 
-                tour = requests.get(f"https://hit-travel.org/api/detail/tour/{tour_id}")
+        update_tour_request_with_lead(tour_request, lead_response, serializer.data)
 
-                context = {
-                    "obj": tour_request,
-                    "date": date,
-                    "price_word": price_word,
-                    "surcharge_word": surcharge_word,
-                    "operatorname": tour.json()["tour"]["operatorname"],
-                    "flydate": tour.json()["tour"]["flydate"],
-                    "nights": tour.json()["tour"]["nights"],
-                }
+        pdf_generated = generate_and_save_pdf(tour_request, tour_id)
+        if not pdf_generated:
+            return Response({"response": False, "message": "Ошибка генерации PDF"}, status=500)
 
-                template = get_template("index.html")
-                html = template.render(context)
+        transaction, deeplink = create_transaction(tour_request, serializer.data, user)
+        if not transaction:
+            return Response({"response": False, "message": "Ошибка создания транзакции"}, status=500)
 
-                pdf = pdfkit.from_string(html, False)
+        bonuses_updated = decrease_user_bonuses(user, serializer.data["bonuses"])
+        if not bonuses_updated:
+            return Response({"response": False, "message": "Ошибка уменьшения бонусов"}, status=500)
 
-                tour_request.agreement.save(
-                    f"agreement_pdf_{tour_request.id}.pdf",
-                    ContentFile(pdf),
-                    save=True,
-                )
-
-                tour_request.paid = float(serializer.data["bonuses"])
-                tour_request.save()
-                bonuses = decrease_bonuses(
-                    user.bcard_id, serializer.data["bonuses"], "test"
-                )
-                amount = float(tour_request.price) * float(Currency.objects.get(id=int(serializer.data["currency"])).sell) - float(tour_request.paid)
-                transaction = Transaction.objects.create(
-                    status="processing",
-                    name="tour",
-                    tour_id=tour_request.id,
-                    user=request.user,
-                    amount=amount,
-                    rid=Transaction.generate_unique_code()
-                    )
-                tour_request.payler_url = f"https://sandbox.payler.com/gapi/Pay?session_id={transaction.id}"
-                tour_request.transaction_id = transaction.id
-                tour_request.save()
-                deeplink = f"https://app.mbank.kg/deeplink?service=67ec3602-7c44-415c-a2cd-08d3376216f5&PARAM1={transaction.rid}&amount={int(transaction.amount)}"
-
-                return Response(
-                    {
-                        "response": True,
-                        "message": "Заявка успешно отправлено",
-                        "deeplink": deeplink,
-                        "amount": transaction.amount,
-                        "data": TourRequestSerializer(RequestTour.objects.get(id=tour_request.id)).data,
-                        "transaction_id": transaction.id,
-                    }
-                )
-            return Response(serializer.errors)
+        return Response(
+            {
+                "response": True,
+                "message": "Заявка успешно отправлена",
+                "deeplink": deeplink,
+                "amount": transaction.amount,
+                "data": TourRequestSerializer(tour_request).data,
+                "transaction_id": transaction.id,
+            }
+        )
 
 
 class RequestHotelView(views.APIView):
@@ -114,7 +73,7 @@ class RequestHotelView(views.APIView):
             nights = serializer.validated_data.get("nights")
             flydate = serializer.validated_data.get("flydate")
             placement = serializer.validated_data.get("placement")
-            adults = serializer.validated_data.get("adults", 1)
+            adults = serializer.validated_data.get("adults", 0)
             child = serializer.validated_data.get("child", 0)
             mealcode = serializer.validated_data.get("mealcode")
             mealrussian = serializer.validated_data.get("mealrussian")

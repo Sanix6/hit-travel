@@ -174,6 +174,8 @@ def create_request(data, user):
             {
                 "u_name": passenger.first_name,
                 "u_surname": passenger.last_name,
+                "u_name_en": passenger.first_name,
+                "u_surname_en": passenger.last_name,
                 "u_birthday": passenger.birthdate.strftime("%Y-%m-%d") if passenger.birthdate else None,
                 "u_zagran_number": passenger.docnum,
                 "u_zagran_expire": passenger.docexp.strftime("%Y-%m-%d") if passenger.docexp else None,

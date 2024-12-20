@@ -5,7 +5,7 @@ from .models import UserToken, TokenFCM
 
 class TokenCreateSerializer(serializers.ModelSerializer):
     token = serializers.CharField(required=True)
-
+    
     class Meta:
         model = UserToken
         fields = ('token',)

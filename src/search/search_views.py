@@ -1,21 +1,19 @@
 import time
 import requests
+from .services import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.conf import settings
 from .models import Countries
-from rest_framework.permissions import IsAuthenticated
 from src.main.models import Currency
 from .services import get_isfavorite, get_isrequested, get_requestedhotel
-from redis import Redis
-import json
 from .utils import get_search_result, convert_currency, fetch_result_data
 
 
-class SearchView(APIView):
-    authlogin = settings.AUTHLOGIN
-    authpass = settings.AUTHPASS
+authlogin = settings.AUTHLOGIN
+authpass = settings.AUTHPASS
 
+class SearchView(APIView):
     def get(self, request):
         query_params = request.query_params
         currency = query_params.get("currency")
@@ -60,131 +58,87 @@ class SearchView(APIView):
 
             return Response(data)
 
-class FilterParams(APIView):
-    def get(self, request):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS
 
-        options = requests.get(
-            f"http://tourvisor.ru/xml/list.php?type="
-            f"hotel,country,departure,meal,stars,operator"
+
+class FilterParams(APIView):    
+    def get(self, request):
+        base_url = "http://tourvisor.ru/xml/list.php"
+        options_url = (
+            f"{base_url}?type=hotel,country,departure,meal,stars,operator"
             f"&format=json&authpass={authpass}&authlogin={authlogin}"
         )
-        options_data = options.json()
-
-        services_operators = requests.get(
-            f"http://tourvisor.ru/xml/list.php?authlogin={authlogin}&authpass={authpass}"
+        services_operators_url = (
+            f"{base_url}?authlogin={authlogin}&authpass={authpass}"
             f"&format=json&type=services,operator"
-        ).json()["lists"]
-
-        if options.status_code != 200:
-            return Response({"response": False})
-
-        options_data["lists"]["services"] = services_operators["services"]
-        options_data["lists"]["operators"] = services_operators["operators"]
-
-        return Response(options_data)
-
-
-class FilterHotels(APIView):
-    def get(self, request):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS
-
-        hotcountry = request.query_params.get("hotcountry")
-        hotregion = request.query_params.get("hotregion")
-        hotstars = request.query_params.get("hotstars")
-        hotrating = request.query_params.get("hotrating")
-        hotactive = request.query_params.get("hotactive")
-        hotrelax = request.query_params.get("hotrelax")
-        hotfamily = request.query_params.get("hotfamily")
-        hothealth = request.query_params.get("hothealth")
-        hotcity = request.query_params.get("hotcity")
-        hotbeach = request.query_params.get("hotbeach")
-        hotdeluxe = request.query_params.get("hotdeluxe")
-
-        url = "http://tourvisor.ru/xml/list.php?type=hotel&format=json"
-        url += f"&authpass={authpass}&authlogin={authlogin}"
-
-        if hotcountry:
-            url += f"&hotcountry={hotcountry}"
-
-        if hotregion:
-            url += f"&hotregion={hotregion}"
-
-        if hotstars:
-            url += f"&hotstars={hotstars}"
-
-        if hotactive:
-            url += f"&hotactive={hotactive}"
-
-        if hotrating:
-            url += f"&hotrating={hotrating}"
-
-        if hotfamily:
-            url += f"&hotfamily={hotfamily}"
-
-        if hothealth:
-            url += f"&hothealth={hothealth}"
-
-        if hotcity:
-            url += f"&hotcity={hotcity}"
-
-        if hotbeach:
-            url += f"&hotbeach={hotbeach}"
-
-        if hotdeluxe:
-            url += f"&hotdeluxe={hotdeluxe}"
-
-        if hotrelax:
-            url += f"&hotrelax={hotrelax}"
-
-        hotels = requests.get(url)
-
-        if hotels.status_code != 200:
-            return Response({"response": False})
-        return Response(hotels.json())
-
-
-class FilterCountries(APIView):
-    def update_country_name(self, country):
-        if country.get("name") == "Киргизия":
-            country["name"] = "Кыргызстан"
-        return country
-
-    def get(self, request, departureid):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS
-
-        countries = requests.get(
-            f"http://tourvisor.ru/xml/list.php?type=country&cndep={departureid}"
-            f"&format=json&authpass={authpass}&authlogin={authlogin}"
         )
-        if countries.status_code != 200:
-            return Response({"response": False})
+        
+        options_data = fetch_tourvisor_data(options_url)
+        services_operators_data = fetch_tourvisor_data(services_operators_url)
+        
+        if "error" in options_data or "error" in services_operators_data:
+            return Response({"response": False, "error": options_data.get("error") or services_operators_data.get("error")}, status=500)
+        
+        lists = options_data.get("lists", {})
+        services_lists = services_operators_data.get("lists", {})
+        
+        lists["services"] = services_lists.get("services", [])
+        lists["operators"] = services_lists.get("operators", [])
+        
+        options_data["lists"] = lists
+        
+        return Response(options_data, status=200)
 
-        countries = countries.json()
 
-        db = Countries.objects.all()
-        for i1 in countries["lists"]["countries"]["country"]:
-            for i2 in db:
-                if i1['name'] == i2.name:
-                    if i2.img:
-                        i1["img"] = f'https://hit-travel.org{i2.img.url}'
-                    else:
-                        i1["img"] = None
+class FilterHotels(APIView):    
+    def get(self, request):
+        query_params = {
+            "hotcountry": request.query_params.get("hotcountry"),
+            "hotregion": request.query_params.get("hotregion"),
+            "hotstars": request.query_params.get("hotstars"),
+            "hotrating": request.query_params.get("hotrating"),
+            "hotactive": request.query_params.get("hotactive"),
+            "hotfamily": request.query_params.get("hotfamily"),
+            "hothealth": request.query_params.get("hothealth"),
+            "hotcity": request.query_params.get("hotcity"),
+            "hotbeach": request.query_params.get("hotbeach"),
+            "hotdeluxe": request.query_params.get("hotdeluxe"),
+            "hotrelax": request.query_params.get("hotrelax"),
+        }
+        
+        base_url = "http://tourvisor.ru/xml/list.php"
+        url = build_url(base_url, authlogin, authpass, request.query_params, query_params)
+        
+        hotels_data = fetch_tourvisor_data(url)
+        
+        if "error" in hotels_data:
+            return Response({"response": False, "error": hotels_data["error"]}, status=500)
+        
+        return Response(hotels_data, status=200)
 
-            if i1["name"] == "Киргизия":
-                i1["name"] = "Кыргызстан"
 
-        return Response(countries)
+
+class FilterCountries(APIView):    
+    def get(self, request, departureid):
+        url = f"http://tourvisor.ru/xml/list.php?type=country&cndep={departureid}&format=json&authpass={authpass}&authlogin={authlogin}"
+        countries_data = fetch_tourvisor_data(url)
+        
+        if "error" in countries_data:
+            return Response({"response": False, "error": countries_data["error"]}, status=500)
+        
+        country_list = countries_data.get("lists", {}).get("countries", {}).get("country", [])
+        
+        country_list = [update_country_name(country) for country in country_list]
+        db_countries = Countries.objects.all()
+        country_list = add_country_images(country_list, db_countries)
+        
+        countries_data["lists"]["countries"]["country"] = country_list
+        
+        return Response(countries_data, status=200)
+
 
 
 class RegCountryView(APIView):
     def get(self, request, regcountry):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS
-
         regions = requests.get(
             f"http://tourvisor.ru/xml/list.php?type=region,subregion&regcountry={regcountry}"
             f"&authlogin={authlogin}&authpass={authpass}"
@@ -197,9 +151,6 @@ class RegCountryView(APIView):
 
 class TourActualizeView(APIView):
     def get(self, request, tourid):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS
-
         actualize = requests.get(
             f"http://tourvisor.ru/xml/actualize.php?tourid={tourid}&request=0"
             f"&format=json&authpass={authpass}&authlogin={authlogin}"
@@ -212,9 +163,6 @@ class TourActualizeView(APIView):
 
 class TourActdetailView(APIView):
     def get(self, request, tourid):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS
-
         actualize = requests.get(
             f"http://tourvisor.ru/xml/actdetail.php?tourid={tourid}"
             f"&format=json&authpass={authpass}&authlogin={authlogin}"
@@ -226,9 +174,6 @@ class TourActdetailView(APIView):
 
 class HotelDetailView(APIView):
     def get(self, request, hotelcode):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS        
-
         hoteldetail_response = requests.get(
             f"http://tourvisor.ru/xml/hotel.php?hotelcode={hotelcode}"
             f"&format=json&authpass={authpass}&authlogin={authlogin}&reviews=1"
@@ -244,9 +189,6 @@ class HotelDetailView(APIView):
 
 class HotToursListView(APIView):
     def get(self, request):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS
-
         hottours = requests.get(
             f"http://tourvisor.ru/xml/hottours.php?city=80&city2=60&items=20&picturetype=1"
             f"&format=json&authpass={authpass}&authlogin={authlogin}&reviews=1"
@@ -257,65 +199,33 @@ class HotToursListView(APIView):
         return Response(hottours.json())
 
 
-class TourDetailView(APIView):
-    # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+class TourDetailView(APIView):
+    
     def get(self, request, tourid):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS
+        tour_url = f"http://tourvisor.ru/xml/actualize.php?tourid={tourid}&request=1&format=json&authpass={authpass}&authlogin={authlogin}"
+        flights_url = f"http://tourvisor.ru/xml/actdetail.php?tourid={tourid}&format=json&authpass={authpass}&authlogin={authlogin}"
         user = request.user
 
-        # Get hotelcode to return hotel detail
-        try:
-            tour = requests.get(
-                f"http://tourvisor.ru/xml/actualize.php?tourid={tourid}&request=1"
-                f"&format=json&authpass={authpass}&authlogin={authlogin}"
-            )
-
-            if tour.status_code != 200:
-                return Response({"response": False})
-        except KeyError:
-            return Response({"response": False})
-
-        # try:
-        #     hoteldetail = requests.get(
-        #         f"http://tourvisor.ru/xml/hotel.php?hotelcode={tour.json()['data']['tour']['hotelcode']}"
-        #         f"&format=json&authpass={authpass}&authlogin={authlogin}&reviews=1"
-        #     )
-
-        #     if hoteldetail.status_code != 200:
-        #         return Response({"response": False})
-        # except KeyError:
-        #     return Response({"reponse": False})
-
-        # Get flights on this tour
-        try:
-            flights = requests.get(
-                f"http://tourvisor.ru/xml/actdetail.php?tourid={tourid}"
-                f"&format=json&authpass={authpass}&authlogin={authlogin}"
-            )
-            if flights.status_code != 200:
-                return Response({"response": False})
-            flights = flights.json()["flights"]
-        except KeyError:
-            flights = flights.json()
-
-        return Response(
-            {
-                "isfavorite": get_isfavorite(user, tourid),
-                "isrequested": get_isrequested(user, tourid),
-                # "hotel": hoteldetail.json()["data"]["hotel"],
-                "tour": tour.json()["data"]["tour"],
-                "flights": flights,
-            }
-        )
+        tour_data = fetch_tourvisor_data(tour_url)
+        if "error" in tour_data or "data" not in tour_data or "tour" not in tour_data["data"]:
+            return Response({"response": False, "error": tour_data.get("error", "Tour data not available")}, status=500)
+        
+        flights_data = fetch_tourvisor_data(flights_url)
+        flights = flights_data.get("flights", {}) if "error" not in flights_data else {}
+        
+        response_data = {
+            "isfavorite": get_isfavorite(user, tourid),
+            "isrequested": get_isrequested(user, tourid),
+            "tour": tour_data["data"]["tour"],
+            "flights": flights,
+        }
+        
+        return Response(response_data, status=200)
 
 
 class RecommendationsView(APIView):
     def get(self, request):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS
-
         recommendations = requests.get(
             f"http://tourvisor.ru/xml/hottours.php?picturetype=1&items=30"
             f"&format=json&authpass={authpass}&authlogin={authlogin}"
@@ -328,9 +238,6 @@ class RecommendationsView(APIView):
 
 class SearchToursByHotel(APIView):
     def get(self, request, hotels):
-        authlogin = settings.AUTHLOGIN
-        authpass = settings.AUTHPASS
-        
         search_result = requests.get(
             f"http://tourvisor.ru/xml/search.php?format=json&hotels={hotels}"
             f"&authlogin={authlogin}&authpass={authpass}"

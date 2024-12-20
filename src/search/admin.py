@@ -1,22 +1,18 @@
 from django.contrib import admin
 from django.contrib.auth.models import Group
-from rest_framework.authtoken.models import TokenProxy
-from admin_extra_buttons.api import ExtraButtonsMixin, button, confirm_action, link, view
-from admin_extra_buttons.utils import HttpResponseRedirect, HttpResponseRedirectToReferrer
+from admin_extra_buttons.api import ExtraButtonsMixin, button
+from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
 from django.conf import settings
 from .models import *
-# from .avia_model import FlightRequest, Segments
 import requests
 from django.utils.html import format_html
 
 admin.site.unregister(Group)
-# admin.site.unregister(TokenProxy)
 
 @admin.register(Countries)
 class CountriesAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     list_display = ['id', 'name', 'get_img']
     list_display_links = ['id', 'name', 'get_img']
-    # readonly_fields = ['name']
 
     def get_img(self, obj):
         if obj.img:

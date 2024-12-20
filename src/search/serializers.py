@@ -1,15 +1,17 @@
 from rest_framework import serializers
-from .models import *
+from urllib.parse import urljoin
+from .models import Favorites, Airports, Cities, Countries
 
 
 class FavoriteToursSerializer(serializers.ModelSerializer):
+    """Serializer for user's favorite tours."""
     class Meta:
         model = Favorites
         fields = '__all__'
 
 
-
 class AirportsSerializer(serializers.ModelSerializer):
+    """Serializer for airport information."""
     class Meta:
         model = Airports
         fields = ['id', 'name', 'code_name']
@@ -17,7 +19,7 @@ class AirportsSerializer(serializers.ModelSerializer):
 
 class CitiesSerializer(serializers.ModelSerializer):
     airports = AirportsSerializer(many=True, read_only=True)
-
+    
     class Meta:
         model = Cities
         fields = ['id', 'name', 'code_name', 'airports']
@@ -26,22 +28,29 @@ class CitiesSerializer(serializers.ModelSerializer):
 class CountrySerializer(serializers.ModelSerializer):
     cities = CitiesSerializer(many=True, read_only=True)
     img = serializers.SerializerMethodField()
-
+    
     class Meta:
-        model =Countries
+        model = Countries
         fields = ['id', 'name', 'code_name', 'img', 'cities']
-
+    
     def get_img(self, obj):
         if obj.img:
-            return f"https://hit-travel.org{obj.img.url}"
-        
+            return urljoin("https://hit-travel.org", obj.img.url)
+        return None
+    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        from_city_code = self.context['request'].query_params.get('from')
-
+        
+        request = self.context.get('request')
+        if request is None:
+            return representation
+        
+        from_city_code = request.query_params.get('from')
         if from_city_code:
-            filtered_cities = representation['cities'][:]
-            filtered_cities = [city for city in filtered_cities if city['code_name'].upper() != from_city_code.upper()]
-            representation['cities'] = filtered_cities
-
+            from_city_code_upper = from_city_code.upper()
+            representation['cities'] = [
+                city for city in representation.get('cities', []) 
+                if city.get('code_name', '').upper() != from_city_code_upper
+            ]
+        
         return representation

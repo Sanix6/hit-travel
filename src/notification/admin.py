@@ -17,7 +17,7 @@ class CustomNotificationAdmin(admin.ModelAdmin):
 
 @admin.register(TokenFCM)
 class TokenFCMAdmin(admin.ModelAdmin):
-    list_display = ('id', 'created_at')
+    list_display = ('id', 'token', 'created_at')
 
 
 @admin.register(UserToken)

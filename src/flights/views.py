@@ -59,7 +59,9 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
-class FlightsSearchView(APIView):
+
+
+class FlightsSearchView(GenericAPIView):
 
     def get(self, request):
         try:
@@ -67,44 +69,25 @@ class FlightsSearchView(APIView):
             token = redis_client.get('token').decode("utf-8")
         except Exception as e:
             return Response({"message": "Failed to connect to Redis or retrieve token"}, status=500)
-
-        raw_date = request.query_params.get('segments[0][date]')
-        if not raw_date:
-            return Response({"error": "Missing required parameter 'segments[0][date]'"}, status=400)
-
-        try:
-            flight_date = datetime.strptime(raw_date, '%d.%m.%Y')
-        except ValueError:
-            return Response(
-                {"error": f"Invalid date format for 'segments[0][date]': {raw_date}. Expected format: DD.MM.YYYY"},
-                status=400
-            )
-
+        
         encoded_params = urlencode(request.query_params, safe='[]')
         url = f"{avia_center_url}/avia/search-recommendations?auth_key={token}&{encoded_params}"
-        
-        try:
-            response = requests.get(url.encode("utf-8"))
-        except requests.exceptions.RequestException as e:
-            return Response({"error": "Failed to get data from the URL"}, status=500)
-
-
-        try:
-            response_data = response.json().get("data", {})
-        except ValueError:
-            return Response({"error": "Invalid response from the API"}, status=500)
-
+        response = requests.get(url.encode("utf-8"))
+        response_data = response.json().get("data", {})
         is_refund_filter = request.query_params.get('is_refund', 'false').lower() == 'true'
         is_baggage_filter = request.query_params.get('is_baggage', 'false').lower() == 'true'
+
         flights = response_data.get('flights', [])
         filtered_flights = []
 
         for flight in flights:
-            if is_refund_filter and flight.get('is_refund') is False:
-                continue
+            if is_refund_filter:
+                if flight.get('is_refund') == False:
+                    continue
 
-            if is_baggage_filter and flight.get('is_baggage') is False:
-                continue
+            if is_baggage_filter:
+                if flight.get('is_baggage') == False:
+                    continue
 
             provider = flight.get('provider', {})
             supplier = provider.get('supplier', {})
@@ -118,6 +101,9 @@ class FlightsSearchView(APIView):
                 )
                 supplier['logo'] = "https://hit-travel.org/" + f"{air_provider.img.url}" if air_provider.img else None
                 filtered_flights.append(flight)
+                
+
+        flight_date = datetime.strptime(request.query_params.get('segments[0][date]'), '%d.%m.%Y')
 
         def fetch_nearest_flights(offset):
             nearest_date = (flight_date + timedelta(days=offset)).strftime('%d.%m.%Y')
@@ -125,24 +111,15 @@ class FlightsSearchView(APIView):
             nearest_params['segments[0][date]'] = nearest_date
             nearest_encoded_params = urlencode(nearest_params, safe='[]')
             nearest_url = f"{avia_center_url}/avia/search-recommendations?auth_key={token}&{nearest_encoded_params}&count=1"
-            logger.info(f"Fetching nearest flight for date {nearest_date}: {nearest_url}")
+            nearest_response = requests.get(nearest_url.encode("utf-8"))
+            nearest_data = nearest_response.json().get("data", {})
+            nearest_flight = nearest_data.get('flights', [])[0] if nearest_data.get('flights') else None
 
-            try:
-                nearest_response = requests.get(nearest_url.encode("utf-8"))
-            except requests.exceptions.RequestException as e:
-                return None
-
-            try:
-                nearest_data = nearest_response.json().get("data", {})
-                nearest_flight = nearest_data.get('flights', [])[0] if nearest_data.get('flights') else None
-                if nearest_flight:
-                    price = nearest_flight.get('price', {}).get('KGS', {}).get('amount', 0)
-                    return {
-                        "date": nearest_date,
-                        "price": price
-                    }
-            except ValueError:
-                logger.error("Failed to parse nearest flight response JSON.")
+            if nearest_flight:
+                return {
+                    "date": nearest_date,
+                    "price": nearest_flight.get('price', {}).get('KGS', {}).get('amount', 0)
+                }
             return None
 
         offsets = range(-2, 3)
@@ -159,14 +136,12 @@ class FlightsSearchView(APIView):
                 "price": f"{nearest_flight['price']} сом",
                 "active_day": (flight_date == original_date)
             })
-            logger.info(f"Formatted nearest flight: {nearest_flight}")
 
         response_data['flights'] = filtered_flights
         response_data['nearest'] = nearest_flights_formatted
 
-        logger.info(f"Returning response data: {response_data}")
-
         return Response(response_data)
+
 
 class FlightDetailView(APIView):
     def get(self, request, *args, **kwargs):

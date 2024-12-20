@@ -2,7 +2,6 @@ import requests
 from rest_framework.response import Response
 import time
 
-
 def build_search_url(authlogin, authpass, query_params):
     base_url = (
         f"http://tourvisor.ru/xml/search.php?format=json"
@@ -11,48 +10,31 @@ def build_search_url(authlogin, authpass, query_params):
     params = "&".join(f"{key}={value}" for key, value in query_params.items() if key != "directOnly")
     return f"{base_url}&{params}"
 
-
 def get_search_result(authlogin, authpass, query_params):
     search_url = build_search_url(authlogin, authpass, query_params)
-    response = requests.get(search_url)
-
-    if response.status_code != 200:
-        return None
-
     try:
+        response = requests.get(search_url)
+        response.raise_for_status()
         return response.json().get("result", {}).get("requestid")
-    except KeyError:
-        return None
+    except (requests.exceptions.RequestException, KeyError) as e:
+        return {"error": f"Failed to get search result: {str(e)}"}
 
 
 def convert_currency(data, usd_exchange, eur_exchange):
     for hotel in data.get("data", {}).get("result", {}).get("hotel", []):
-        if hotel["currency"] == "USD":
+        hotel_currency = hotel.get("currency")
+        if hotel_currency in ("USD", "EUR"):
+            exchange_rate = usd_exchange if hotel_currency == "USD" else eur_exchange
             hotel["currency"] = "KGS"
-            hotel["price"] = int(hotel["price"] * usd_exchange)
-
+            hotel["price"] = int(hotel.get("price", 0) * exchange_rate)
+            
             for tour in hotel.get("tours", {}).get("tour", []):
-                if tour["currency"] == "USD":
-                    tour["currency"] = "KGS"
-                    tour["price"] = int(tour["price"] * usd_exchange)
-                else:
-                    tour["currency"] = "KGS"
-                    tour["price"] = int(tour["price"] * eur_exchange)
-
-        elif hotel["currency"] == "EUR":
-            hotel["currency"] = "KGS"
-            hotel["price"] = int(hotel["price"] * eur_exchange)
-
-            for tour in hotel.get("tours", {}).get("tour", []):
-                if tour["currency"] == "USD":
-                    tour["currency"] = "KGS"
-                    tour["price"] = int(tour["price"] * usd_exchange)
-                else:
-                    tour["currency"] = "KGS"
-                    tour["price"] = int(tour["price"] * eur_exchange)
-
+                tour_currency = tour.get("currency")
+                exchange_rate = usd_exchange if tour_currency == "USD" else eur_exchange
+                tour["currency"] = "KGS"
+                tour["price"] = int(tour.get("price", 0) * exchange_rate)
+    
     return data
-
 
 def fetch_result_data(authlogin, authpass, requestid, page):
     url = (
@@ -60,9 +42,9 @@ def fetch_result_data(authlogin, authpass, requestid, page):
         f"&requestid={requestid}&authlogin={authlogin}"
         f"&authpass={authpass}&page={page}"
     )
-    response = requests.get(url)
-
-    if response.status_code != 200:
-        return None
-
-    return response.json()
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Failed to fetch result data: {str(e)}"}

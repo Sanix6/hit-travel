@@ -17,9 +17,7 @@ class UpdateProfilePhotoAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        serializer = UpdateProfilePhotoSerializer(
-            instance=request.user, data=request.data
-        )
+        serializer = UpdateProfilePhotoSerializer(instance=request.user, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({"response": True, "message": "Успешно обновлено"})
@@ -44,12 +42,7 @@ class RemoveProfilePhotoAPIView(APIView):
             return Response(
                 {"response": True, "message": "Фотография профиля удалена."}
             )
-        return Response(
-            {
-                "response": False,
-                "messafe": "Нет фотографии профиля, которую можно удалить.",
-            }
-        )
+        return Response({"response": False,"messafe": "Нет фотографии профиля, которую можно удалить.",})
 
 
 class ProfileInfoAPIView(APIView):

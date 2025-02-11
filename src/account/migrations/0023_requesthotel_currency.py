@@ -7,14 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0022_requesthotel_paid_requesttour_paid'),
-        ('main', '0010_alter_currency_currency'),
+        ("account", "0022_requesthotel_paid_requesttour_paid"),
+        ("main", "0010_alter_currency_currency"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='requesthotel',
-            name='currency',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='main.currency'),
+            model_name="requesthotel",
+            name="currency",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="main.currency",
+            ),
         ),
     ]

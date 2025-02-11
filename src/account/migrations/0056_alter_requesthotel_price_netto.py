@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0055_requesthotel_price_netto'),
+        ("account", "0055_requesthotel_price_netto"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='requesthotel',
-            name='price_netto',
-            field=models.FloatField(blank=True, null=True, verbose_name='Цена (оригинальная)'),
+            model_name="requesthotel",
+            name="price_netto",
+            field=models.FloatField(
+                blank=True, null=True, verbose_name="Цена (оригинальная)"
+            ),
         ),
     ]

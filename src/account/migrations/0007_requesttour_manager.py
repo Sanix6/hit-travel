@@ -8,13 +8,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0006_remove_traveler_authority_traveler_country_and_more'),
+        ("account", "0006_remove_traveler_authority_traveler_country_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='requesttour',
-            name='manager',
-            field=models.ForeignKey(blank=True, limit_choices_to={'Managers': 'Менеджеры'}, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='requested_tours', to=settings.AUTH_USER_MODEL),
+            model_name="requesttour",
+            name="manager",
+            field=models.ForeignKey(
+                blank=True,
+                limit_choices_to={"Managers": "Менеджеры"},
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="requested_tours",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

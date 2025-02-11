@@ -4,7 +4,9 @@ from django.utils.translation import gettext_lazy as _
 
 class Stories(models.Model):
     created_at = models.DateTimeField(_("Дата и время"), auto_now_add=True)
-    img = models.ImageField(_("Изображение"), upload_to="story_images", null=True, blank=True)
+    img = models.ImageField(
+        _("Изображение"), upload_to="story_images", null=True, blank=True
+    )
 
     class Meta:
         verbose_name = _("История")
@@ -27,26 +29,29 @@ class StoryVideos(models.Model):
 
 class Versions(models.Model):
     version = models.CharField(_("Версия"), max_length=255)
-    appstore = models.URLField(_("App Store"), default="https://apps.apple.com/kg/app/hit-travel/id6467560261")
-    googleplay = models.URLField(_("Google Play"), default="https://play.google.com/store/apps/details?id=com.hit.travel")
+    appstore = models.URLField(
+        _("App Store"), default="https://apps.apple.com/kg/app/hit-travel/id6467560261"
+    )
+    googleplay = models.URLField(
+        _("Google Play"),
+        default="https://play.google.com/store/apps/details?id=com.hit.travel",
+    )
     date = models.DateTimeField(_("Дата"), auto_now_add=True)
-    
+
     class Meta:
         verbose_name = _("Версия приложения")
         verbose_name_plural = _("Версии приложения")
-        
+
     def __str__(self) -> str:
         return self.version
 
-    
-class Currency(models.Model):
-    CURRENCY_CHOICES = (
-        ("USD", "USD"),
-        ("EUR", "EUR"),
-        ("RUB", "RUB")
-    )
 
-    currency = models.CharField(_("Валюта"), max_length=20, choices=CURRENCY_CHOICES, unique=True)
+class Currency(models.Model):
+    CURRENCY_CHOICES = (("USD", "USD"), ("EUR", "EUR"), ("RUB", "RUB"))
+
+    currency = models.CharField(
+        _("Валюта"), max_length=20, choices=CURRENCY_CHOICES, unique=True
+    )
     purchase = models.DecimalField(_("Покупка"), max_digits=10, decimal_places=2)
     sell = models.DecimalField(_("Продажа"), max_digits=10, decimal_places=2)
 

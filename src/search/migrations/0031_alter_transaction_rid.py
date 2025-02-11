@@ -6,13 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0030_alter_flightrequest_status_alter_transaction_rid'),
+        ("search", "0030_alter_flightrequest_status_alter_transaction_rid"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transaction',
-            name='rid',
-            field=models.CharField(default='502457', editable=False, max_length=6, unique=True, verbose_name='Уникальный код'),
+            model_name="transaction",
+            name="rid",
+            field=models.CharField(
+                default="502457",
+                editable=False,
+                max_length=6,
+                unique=True,
+                verbose_name="Уникальный код",
+            ),
         ),
     ]

@@ -6,18 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0014_remove_transaction_phone'),
+        ("search", "0014_remove_transaction_phone"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='flightrequest',
-            name='amount',
-            field=models.FloatField(verbose_name='Сумма платежа'),
+            model_name="flightrequest",
+            name="amount",
+            field=models.FloatField(verbose_name="Сумма платежа"),
         ),
         migrations.AlterField(
-            model_name='flightrequest',
-            name='billing_number',
-            field=models.CharField(blank=True, max_length=500, null=True, verbose_name='Номер брони'),
+            model_name="flightrequest",
+            name="billing_number",
+            field=models.CharField(
+                blank=True, max_length=500, null=True, verbose_name="Номер брони"
+            ),
         ),
     ]

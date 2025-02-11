@@ -1,26 +1,19 @@
-from rest_framework.generics import CreateAPIView
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.utils.dateparse import parse_datetime
 import time
 
+from django.utils.dateparse import parse_datetime
+from rest_framework.generics import CreateAPIView
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import (
-    CreateRequest,
-    CreateClient,
-)
-from .serializers import (
-    CreateRequestSerializer,
-    CreateClientSerializer,
-)
-from .services import (
-    add_request,
-)
+from .models import CreateClient, CreateRequest
+from .serializers import CreateClientSerializer, CreateRequestSerializer
+from .services import add_request
+
 
 class SaveDataView(APIView):
     def post(self, request, format=None):
         try:
-            data = request.body.decode('utf-8')
+            data = request.body.decode("utf-8")
             with open("webhook.txt", "a") as file:
                 file.write(f"{data}\n\n")
             return Response({"message": "Data saved successfully"}, status=201)
@@ -37,20 +30,20 @@ class CreateRequestView(APIView):
         try:
             data = request.data
 
-            uon_id = data.get('uon_id')
-            uon_subdomain = data.get('uon_subdomain')
-            datetime_str = data.get('datetime')
+            uon_id = data.get("uon_id")
+            uon_subdomain = data.get("uon_subdomain")
+            datetime_str = data.get("datetime")
             datetime = parse_datetime(datetime_str)
-            type_id = data.get('type_id')
-            request_id = data.get('request_id')
-            nurbek_test = data.get('nurbek_test')
+            type_id = data.get("type_id")
+            request_id = data.get("request_id")
+            nurbek_test = data.get("nurbek_test")
 
             instance = CreateRequest.objects.create(
                 uon_id=uon_id,
                 uon_subdomain=uon_subdomain,
                 datetime=datetime,
                 type_id=type_id,
-                request_id=int(request_id)
+                request_id=int(request_id),
             )
             instance.save()
             time.sleep(2)

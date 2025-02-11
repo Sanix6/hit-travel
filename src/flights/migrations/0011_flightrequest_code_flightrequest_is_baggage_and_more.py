@@ -6,28 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('flights', '0010_remove_flightrequest_partner_affiliate_fee'),
+        ("flights", "0010_remove_flightrequest_partner_affiliate_fee"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='flightrequest',
-            name='code',
+            model_name="flightrequest",
+            name="code",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name='flightrequest',
-            name='is_baggage',
+            model_name="flightrequest",
+            name="is_baggage",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='flightrequest',
-            name='provider',
+            model_name="flightrequest",
+            name="provider",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name='flightrequest',
-            name='type',
+            model_name="flightrequest",
+            name="type",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
     ]

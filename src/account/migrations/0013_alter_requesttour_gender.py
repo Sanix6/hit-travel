@@ -6,13 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0012_alter_traveler_dateofborn'),
+        ("account", "0012_alter_traveler_dateofborn"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='requesttour',
-            name='gender',
-            field=models.CharField(blank=True, choices=[('м', 'Муж'), ('ж', 'Жен')], max_length=3, null=True, verbose_name='Пол'),
+            model_name="requesttour",
+            name="gender",
+            field=models.CharField(
+                blank=True,
+                choices=[("м", "Муж"), ("ж", "Жен")],
+                max_length=3,
+                null=True,
+                verbose_name="Пол",
+            ),
         ),
     ]

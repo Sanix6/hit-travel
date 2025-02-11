@@ -6,22 +6,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0010_remove_traveler_country_and_more'),
+        ("account", "0010_remove_traveler_country_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='traveler',
-            name='inn',
+            model_name="traveler",
+            name="inn",
         ),
         migrations.AddField(
-            model_name='traveler',
-            name='passport_id',
-            field=models.CharField(blank=True, max_length=255, null=True, verbose_name='ID пасспорта'),
+            model_name="traveler",
+            name="passport_id",
+            field=models.CharField(
+                blank=True, max_length=255, null=True, verbose_name="ID пасспорта"
+            ),
         ),
         migrations.AlterField(
-            model_name='traveler',
-            name='dateofborn',
-            field=models.DateField(blank=True, null=True, verbose_name='Дата'),
+            model_name="traveler",
+            name="dateofborn",
+            field=models.DateField(blank=True, null=True, verbose_name="Дата"),
         ),
     ]

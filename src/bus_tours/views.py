@@ -1,25 +1,23 @@
-from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from django.db.models import Count, F, Sum
+from django.db.models.functions import TruncMonth
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import F
-from django.db.models import Sum, Count
-from django.db.models.functions import TruncMonth
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .filters import BusToursFilter
-from .services import send_bustour_request
-
-from .models import BusTours, Reviews, Category, BusTourRequest
+from .models import BusTourRequest, BusTours, Category, Reviews
 from .serializers import (
-    BusTourListSerializer,
     BusTourDetailSerializer,
-    ReviewCreateSerializer,
-    CategorySerializer,
+    BusTourListSerializer,
     BusTourRequestSerializer,
+    CategorySerializer,
     MyBusToursSerializer,
+    ReviewCreateSerializer,
 )
-
+from .services import send_bustour_request
 
 
 class BusTourListAPIView(ListAPIView):
@@ -29,16 +27,17 @@ class BusTourListAPIView(ListAPIView):
     filterset_class = BusToursFilter
 
 
-
 class BusTourListParamsAPIView(APIView):
     def get(self, request):
         bus_tours = BusTours.objects.all()
 
-        monthly_data = bus_tours.annotate(month=TruncMonth("datefrom")).values(
-            "month"
-        ).annotate(
-            total_price=Sum("price"),
-            total_count=Count("id"),
+        monthly_data = (
+            bus_tours.annotate(month=TruncMonth("datefrom"))
+            .values("month")
+            .annotate(
+                total_price=Sum("price"),
+                total_count=Count("id"),
+            )
         )
 
         response_data = {"data": {"calendar": {"month": {}}}}
@@ -61,7 +60,6 @@ class BusTourListParamsAPIView(APIView):
 
             response_data["data"]["calendar"]["month"][month] = date_info
 
-
         departure_choices = [
             {"name": choice[0]} for choice in BusTours.DEPARTURE_CHOICES
         ]
@@ -72,7 +70,6 @@ class BusTourListParamsAPIView(APIView):
         response_data["categories"] = category_serializer.data
         response_data["departures"] = departure_choices
         return Response(response_data)
-
 
 
 class BusTourDetailAPIView(RetrieveAPIView):

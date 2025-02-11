@@ -6,18 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0020_alter_user_passport_id'),
+        ("account", "0020_alter_user_passport_id"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='requesthotel',
-            name='price',
-            field=models.FloatField(blank=True, null=True, verbose_name='К оплате'),
+            model_name="requesthotel",
+            name="price",
+            field=models.FloatField(blank=True, null=True, verbose_name="К оплате"),
         ),
         migrations.AlterField(
-            model_name='requesthotel',
-            name='status',
-            field=models.IntegerField(choices=[(1, 'Новая заявка'), (2, 'В процессе'), (3, 'Оплачено'), (4, 'Отклонено')], default=1, verbose_name='Статус'),
+            model_name="requesthotel",
+            name="status",
+            field=models.IntegerField(
+                choices=[
+                    (1, "Новая заявка"),
+                    (2, "В процессе"),
+                    (3, "Оплачено"),
+                    (4, "Отклонено"),
+                ],
+                default=1,
+                verbose_name="Статус",
+            ),
         ),
     ]

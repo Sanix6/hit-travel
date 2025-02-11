@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0037_alter_transaction_tour_id'),
+        ("search", "0037_alter_transaction_tour_id"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='transaction',
-            name='hotel_id',
-            field=models.IntegerField(blank=True, null=True, verbose_name='Айди отеля'),
+            model_name="transaction",
+            name="hotel_id",
+            field=models.IntegerField(blank=True, null=True, verbose_name="Айди отеля"),
         ),
         migrations.AlterField(
-            model_name='transaction',
-            name='request_id',
-            field=models.UUIDField(blank=True, null=True, verbose_name='Айди авиа'),
+            model_name="transaction",
+            name="request_id",
+            field=models.UUIDField(blank=True, null=True, verbose_name="Айди авиа"),
         ),
     ]

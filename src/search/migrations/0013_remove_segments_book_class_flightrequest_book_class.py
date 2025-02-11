@@ -6,18 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0012_flightrequest_amount_flightrequest_billing_number'),
+        ("search", "0012_flightrequest_amount_flightrequest_billing_number"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='segments',
-            name='book_class',
+            model_name="segments",
+            name="book_class",
         ),
         migrations.AddField(
-            model_name='flightrequest',
-            name='book_class',
-            field=models.CharField(choices=[('e', 'Эконом класс'), ('b', 'Бизнес класс'), ('f', 'Первый класс'), ('w', 'Комфорт')], default=1, max_length=250, verbose_name='Класс'),
+            model_name="flightrequest",
+            name="book_class",
+            field=models.CharField(
+                choices=[
+                    ("e", "Эконом класс"),
+                    ("b", "Бизнес класс"),
+                    ("f", "Первый класс"),
+                    ("w", "Комфорт"),
+                ],
+                default=1,
+                max_length=250,
+                verbose_name="Класс",
+            ),
             preserve_default=False,
         ),
     ]

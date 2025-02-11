@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM Token Test</title>
+    <script>
+        async function sendToken() {
+            const tokenInput = document.getElementById('fcmToken');
+            const token = tokenInput.value;
+
+            if (!token) {
+                alert('Введите токен устройства');
+                return;
+            }
+
+            try {
+                const response = await fetch('/fcm-token/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': '0c486b3a07918f69f8e13c0d17d9dd806b87eb9b', 
+                    },
+                    body: JSON.stringify({ token: token }),
+                });
+
+                if (response.ok) {
+                    alert('Токен успешно отправлен на сервер!');
+                } else {
+                    const errorData = await response.json();
+                    console.error('Ошибка:', errorData);
+                    alert('Ошибка при отправке токена.');
+                }
+            } catch (error) {
+                console.error('Ошибка запроса:', error);
+                alert('Не удалось отправить токен на сервер.');
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>FCM Token Test</h1>
+    <p>Введите FCM-токен и отправьте его на сервер:</p>
+    <input type="text" id="fcmToken" placeholder="Введите FCM-токен" style="width: 300px;">
+    <button onclick="sendToken()">Отправить токен</button>
+</body>
+</html>

@@ -7,17 +7,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0027_alter_flight_date_begin_alter_flight_date_end_and_more'),
+        ("account", "0027_alter_flight_date_begin_alter_flight_date_end_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='requesttourservices',
-            name='extended_fields',
+            model_name="requesttourservices",
+            name="extended_fields",
         ),
         migrations.AlterField(
-            model_name='requesttourservices',
-            name='main',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='services', to='account.requesttour'),
+            model_name="requesttourservices",
+            name="main",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="services",
+                to="account.requesttour",
+            ),
         ),
     ]

@@ -1,11 +1,6 @@
 from django.urls import path
 
-from .views import (
-    CreateRequestView,
-    # CreateClientView
-    # SaveDataView,
-)
-
+from .views import CreateRequestView  # CreateClientView; SaveDataView,
 
 urlpatterns = [
     path("create-request", CreateRequestView.as_view()),

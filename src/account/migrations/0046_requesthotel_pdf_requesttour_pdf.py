@@ -6,18 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0045_manualrequests_data'),
+        ("account", "0045_manualrequests_data"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='requesthotel',
-            name='pdf',
-            field=models.FileField(blank=True, null=True, upload_to='agreements', verbose_name='Прикрепить PDF'),
+            model_name="requesthotel",
+            name="pdf",
+            field=models.FileField(
+                blank=True,
+                null=True,
+                upload_to="agreements",
+                verbose_name="Прикрепить PDF",
+            ),
         ),
         migrations.AddField(
-            model_name='requesttour',
-            name='pdf',
-            field=models.FileField(blank=True, null=True, upload_to='agreements', verbose_name='Прикрепить PDF'),
+            model_name="requesttour",
+            name="pdf",
+            field=models.FileField(
+                blank=True,
+                null=True,
+                upload_to="agreements",
+                verbose_name="Прикрепить PDF",
+            ),
         ),
     ]

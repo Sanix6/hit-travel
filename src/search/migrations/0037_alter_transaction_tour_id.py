@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0036_transaction_tour_id_alter_flightcancel_flight_and_more'),
+        ("search", "0036_transaction_tour_id_alter_flightcancel_flight_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transaction',
-            name='tour_id',
-            field=models.IntegerField(blank=True, null=True, verbose_name='Айди тура'),
+            model_name="transaction",
+            name="tour_id",
+            field=models.IntegerField(blank=True, null=True, verbose_name="Айди тура"),
         ),
     ]

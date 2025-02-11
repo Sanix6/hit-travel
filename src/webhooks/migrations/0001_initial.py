@@ -7,23 +7,30 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='CreateRequest',
+            name="CreateRequest",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('uon_id', models.IntegerField()),
-                ('uon_subdomain', models.CharField(max_length=255)),
-                ('datetime', models.DateTimeField()),
-                ('type_id', models.IntegerField()),
-                ('request_id', models.IntegerField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("uon_id", models.IntegerField()),
+                ("uon_subdomain", models.CharField(max_length=255)),
+                ("datetime", models.DateTimeField()),
+                ("type_id", models.IntegerField()),
+                ("request_id", models.IntegerField()),
             ],
             options={
-                'verbose_name': 'Обращения CRM',
-                'verbose_name_plural': 'Обращения CRM',
+                "verbose_name": "Обращения CRM",
+                "verbose_name_plural": "Обращения CRM",
             },
         ),
     ]

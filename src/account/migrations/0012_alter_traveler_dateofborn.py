@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0011_remove_traveler_inn_traveler_passport_id_and_more'),
+        ("account", "0011_remove_traveler_inn_traveler_passport_id_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='traveler',
-            name='dateofborn',
-            field=models.DateField(blank=True, null=True, verbose_name='Дата рождения'),
+            model_name="traveler",
+            name="dateofborn",
+            field=models.DateField(blank=True, null=True, verbose_name="Дата рождения"),
         ),
     ]

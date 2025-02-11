@@ -1,12 +1,13 @@
-import requests
-import time
 import string
+import time
 from random import choices
-from django.db import models
-from django.utils.translation import gettext_lazy as _
+
+import requests
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
 from django.db.models.signals import post_save
+from django.utils.translation import gettext_lazy as _
 
 
 class CreateRequest(models.Model):
@@ -41,12 +42,12 @@ class CreateClient(models.Model):
     def save(self, *args, **kwargs):
         # time.sleep(10)
         # url = f"https://api.u-on.ru/{settings.KEY}/user/{self.client_id}.json"
-        
+
         # res = requests.get(url)
 
         # if res.status_code != 200:
         #     return
-        
+
         # data = res.json()["user"][0]
 
         # if not data["u_id"]:

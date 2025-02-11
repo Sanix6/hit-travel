@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0017_remove_segments_airline'),
+        ("search", "0017_remove_segments_airline"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transaction',
-            name='name',
-            field=models.CharField(choices=[('tour', 'Тур'), ('hotel', 'Отель'), ('ticket', 'Авиабилет')], max_length=255, verbose_name='Платёж для'),
+            model_name="transaction",
+            name="name",
+            field=models.CharField(
+                choices=[("tour", "Тур"), ("hotel", "Отель"), ("ticket", "Авиабилет")],
+                max_length=255,
+                verbose_name="Платёж для",
+            ),
         ),
     ]

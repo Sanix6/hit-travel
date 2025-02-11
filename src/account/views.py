@@ -1,19 +1,21 @@
-from rest_framework import generics, status, permissions, views
-from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
-from django.utils.translation import gettext_lazy as _
+import string
+from datetime import datetime, timedelta, timezone
+from random import choices, randint
+
+from django.contrib.auth import authenticate
+from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
-from django.contrib.auth.hashers import check_password
-from django.contrib.auth import authenticate
 from django.template.loader import render_to_string
-import string
-from random import randint, choices
-from datetime import datetime, timedelta, timezone
+from django.utils.translation import gettext_lazy as _
+from rest_framework import generics, permissions, status, views
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+
 from ..base.utils import Util
+from .functions import *
 from .serializers import *
 from .services import *
-from .functions import *
 
 
 class PaymentsAPIView(views.APIView):
@@ -30,10 +32,19 @@ class RegisterAPIView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if User.objects.filter(email=request.data["email"]).exists():
-            return Response({"response": False,"message": "Пользователь с таким email уже существует.",})
+            return Response(
+                {
+                    "response": False,
+                    "message": "Пользователь с таким email уже существует.",
+                }
+            )
         if User.objects.filter(phone=request.data["phone"]).exists():
             return Response(
-                {"response": False,"message": "Пользователь с таким телефоном уже существует.",})
+                {
+                    "response": False,
+                    "message": "Пользователь с таким телефоном уже существует.",
+                }
+            )
 
         if serializer.is_valid():
             email = serializer.data["email"]
@@ -45,10 +56,12 @@ class RegisterAPIView(generics.CreateAPIView):
 
             if password != confirm_password:
                 return Response({"response": False, "password": "Пароли не совпадают."})
-            user = User(email=email, first_name=first_name, last_name=last_name, phone=phone)
+            user = User(
+                email=email, first_name=first_name, last_name=last_name, phone=phone
+            )
             user.set_password(password)
             user.save()
-            
+
             user.is_verified = False
             user.verification_code_time = datetime.now()
             user.verification_code = randint(100_000, 999_999)
@@ -72,7 +85,6 @@ class RegisterAPIView(generics.CreateAPIView):
         return Response(serializer.errors)
 
 
-
 class VerifyEmailAPIView(views.APIView):
     serializer_class = VerifyEmailSerializer
 
@@ -80,13 +92,21 @@ class VerifyEmailAPIView(views.APIView):
         serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():
-            return Response({"response": False, "detail": serializer.errors},status=status.HTTP_400_BAD_REQUEST,)
+            return Response(
+                {"response": False, "detail": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         code, email = serializer.data["code"], serializer.data["email"]
 
         try:
             user = User.objects.get(email=email)
         except ObjectDoesNotExist:
-            return Response({"response": False, "message": "Пользователь с таким email не существует"},)
+            return Response(
+                {
+                    "response": False,
+                    "message": "Пользователь с таким email не существует",
+                },
+            )
         if user.is_verified:
             return Response({"message": "Аккаунт уже подтвержден"})
         if not self.is_verification_code_valid(user, code):
@@ -110,7 +130,10 @@ class VerifyEmailAPIView(views.APIView):
             expiration_time = user.verification_code_time + timedelta(minutes=30)
             expiration_time = expiration_time.replace(tzinfo=timezone.utc)
 
-            if datetime.now(timezone.utc) < expiration_time and user.verification_code == code:
+            if (
+                datetime.now(timezone.utc) < expiration_time
+                and user.verification_code == code
+            ):
                 return True
 
         user.verification_code = None
@@ -126,13 +149,21 @@ class SendAgainCodeAPIView(generics.GenericAPIView):
         serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():
-            return Response({"response": False, "detail": serializer.errors},status=status.HTTP_400_BAD_REQUEST,)
+            return Response(
+                {"response": False, "detail": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         email = serializer.data["email"]
 
         try:
             user = User.objects.get(email=email)
         except ObjectDoesNotExist:
-            return Response({"response": False, "message": "Пользователь с таким email не существует"},)
+            return Response(
+                {
+                    "response": False,
+                    "message": "Пользователь с таким email не существует",
+                },
+            )
 
         if user.is_verified:
             return Response({"response": False, "message": "Аккаунт уже подтвержден"})
@@ -148,7 +179,9 @@ class SendAgainCodeAPIView(generics.GenericAPIView):
             "to_email": user.email,
         }
         Util.send_email(email_data)
-        return Response({"response": True, "message": "Код подтверждения успешно отправлен"})
+        return Response(
+            {"response": True, "message": "Код подтверждения успешно отправлен"}
+        )
 
 
 class LoginAPIView(views.APIView):
@@ -165,30 +198,44 @@ class LoginAPIView(views.APIView):
             user = User.objects.get(email=email)
         except ObjectDoesNotExist:
             return Response(
-                {"response": False, "message": "Пользователь с указанными учетными данными не существует"},
-                status=status.HTTP_404_NOT_FOUND
+                {
+                    "response": False,
+                    "message": "Пользователь с указанными учетными данными не существует",
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         user = authenticate(request, email=email, password=password)
 
         if not user:
             return Response(
-                {"response": False, "message": "Невозможно войти в систему с указанными учетными данными"},
-                status=status.HTTP_401_UNAUTHORIZED
+                {
+                    "response": False,
+                    "message": "Невозможно войти в систему с указанными учетными данными",
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         if not user.is_verified:
             return Response(
-                {"response": False, "message": "Потвердите адрес электронной почты", "isactivated": False},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    "response": False,
+                    "message": "Потвердите адрес электронной почты",
+                    "isactivated": False,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         token, _ = Token.objects.get_or_create(user=user)
         return Response(
-            {"response": True, "isactivated": True, "token": token.key, "email": user.email},
-            status=status.HTTP_200_OK
+            {
+                "response": True,
+                "isactivated": True,
+                "token": token.key,
+                "email": user.email,
+            },
+            status=status.HTTP_200_OK,
         )
-
 
 
 class LogoutAPIView(views.APIView):
@@ -200,9 +247,10 @@ class LogoutAPIView(views.APIView):
                 token.delete()
                 return Response({"response": True, "message": "Выход выполнен успешно"})
             except ObjectDoesNotExist:
-                return Response({"reponse": False, "message": "Пользователь не авторизован"})
+                return Response(
+                    {"reponse": False, "message": "Пользователь не авторизован"}
+                )
         return Response({"response": False, "message": "Пользователь не авторизован"})
-
 
 
 class PasswordResetRequestAPIView(views.APIView):
@@ -219,28 +267,56 @@ class PasswordResetRequestAPIView(views.APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({"message": "Пользователь с таким адресом email не существует"},status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"message": "Пользователь с таким адресом email не существует"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         if not user.is_verified:
-            return Response({"response": False, "message": "Пожалуйста, подтвердите ваш адрес электронной почты"},status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "response": False,
+                    "message": "Пожалуйста, подтвердите ваш адрес электронной почты",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         new_password = "".join(choices(string.ascii_letters + string.digits, k=8))
         user.set_password(new_password)
-        user.password_reset_token = None  
+        user.password_reset_token = None
         user.save()
 
-        html_content = render_to_string("password_reset_email.html", {
-            "data": {"name": user.first_name, "email": user.email, "new_password": new_password}})
+        html_content = render_to_string(
+            "password_reset_email.html",
+            {
+                "data": {
+                    "name": user.first_name,
+                    "email": user.email,
+                    "new_password": new_password,
+                }
+            },
+        )
 
-        email_data = {"email_body": html_content,"email_subject": "Используйте новый пароль","to_email": user.email,}
+        email_data = {
+            "email_body": html_content,
+            "email_subject": "Используйте новый пароль",
+            "to_email": user.email,
+        }
         try:
             Util.send_email(email_data)
         except Exception as e:
-            return Response({"error": "Ошибка при отправке почты: " + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": "Ошибка при отправке почты: " + str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         return Response(
-            {"response": True, "message": "Новый пароль был отправлен на вашу электронную почту"},status=status.HTTP_200_OK)
-    
-    
+            {
+                "response": True,
+                "message": "Новый пароль был отправлен на вашу электронную почту",
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 class PasswordResetUpdateAPIView(views.APIView):
     serializer_class = PasswordResetUpdateSerializer
@@ -258,11 +334,20 @@ class PasswordResetUpdateAPIView(views.APIView):
 
                 email_body = f"Ваш новый пароль:\n\n" f"{new_password}"
 
-                email_data = {"email_body": email_body,"email_subject": "Используйте новый пароль","to_email": user.email,}
+                email_data = {
+                    "email_body": email_body,
+                    "email_subject": "Используйте новый пароль",
+                    "to_email": user.email,
+                }
 
                 Util.send_email(email_data)
 
-                return Response({"response": True,"message": "Новый пароль был отправлен на вашу электронную почту",})
+                return Response(
+                    {
+                        "response": True,
+                        "message": "Новый пароль был отправлен на вашу электронную почту",
+                    }
+                )
         except ObjectDoesNotExist:
             return Response({"respons": False, "message": "Неверный токен"})
 
@@ -279,9 +364,14 @@ class SetNewPasswordAPIView(views.APIView):
             user = get_object_or_404(User, pk=request.user.pk)
 
             if not user.is_verified or not user.is_authenticated:
-                return Response({"reponse": False, "message": "Вы неавторизованы"},status=status.HTTP_401_UNAUTHORIZED,)
+                return Response(
+                    {"reponse": False, "message": "Вы неавторизованы"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
             if not check_password(old_password, user.password):
-                return Response({"response": False, "message": "Старый пароль неверен!"})
+                return Response(
+                    {"response": False, "message": "Старый пароль неверен!"}
+                )
             user.set_password(new_password)
             user.save()
             return Response({"response": True, "message": "Пароль успешно обновлен"})
@@ -300,4 +390,3 @@ class GetUserView(views.APIView):
                 return Response(data)
             return Response({"response": False})
         return Response({"response": False})
-

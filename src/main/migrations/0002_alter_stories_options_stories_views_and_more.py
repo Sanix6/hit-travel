@@ -6,22 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0001_initial'),
+        ("main", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='stories',
-            options={'verbose_name': 'История', 'verbose_name_plural': 'Истории'},
+            name="stories",
+            options={"verbose_name": "История", "verbose_name_plural": "Истории"},
         ),
         migrations.AddField(
-            model_name='stories',
-            name='views',
-            field=models.IntegerField(default=1, verbose_name='Количество просмотров'),
+            model_name="stories",
+            name="views",
+            field=models.IntegerField(default=1, verbose_name="Количество просмотров"),
         ),
         migrations.AlterField(
-            model_name='stories',
-            name='video',
-            field=models.FileField(upload_to='stories', verbose_name='История'),
+            model_name="stories",
+            name="video",
+            field=models.FileField(upload_to="stories", verbose_name="История"),
         ),
     ]

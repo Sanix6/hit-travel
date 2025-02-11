@@ -1,6 +1,8 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from sentry_sdk.integrations.django import DjangoIntegration
+import sentry_sdk
 
 import dj_database_url
 import requests
@@ -29,6 +31,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     # additional
+    # "drf_spectacular",
     "admin_extra_buttons",
     "drf_yasg",
     "ckeditor",
@@ -38,6 +41,9 @@ INSTALLED_APPS = [
     # celery
     "django_celery_beat",
     "django_celery_results",
+    "debug_toolbar",
+    "django_prometheus",
+    'cachalot',
     # apps
     "src.account",
     "src.search",
@@ -50,6 +56,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -59,6 +66,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
+
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -93,6 +102,14 @@ DATABASES = {
 }
 
 
+#SENTRY SETTINGS
+sentry_sdk.init(
+    dsn="https://e85695ad2565ac8aa3be6b4d61c04053@o4508601376833536.ingest.de.sentry.io/4508623883993168",
+    traces_sample_rate=1.0,
+    _experiments={
+        "continuous_profiling_auto_start": True,
+    },
+)
 # AUTH_PASSWORD_VALIDATORS = [
 #     {
 #         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -138,6 +155,11 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    # 'DEFAULT_RENDERER_CLASSES': [
+    #     # 'rest_framework.renderers.JSONRenderer',
+    #     # 'rest_framework.renderers.BrowsableAPIRenderer',
+    # ]
+
 }
 
 CORS_ALLOWED_ORIGINS = [
@@ -151,12 +173,12 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
     }
 }
 
@@ -217,3 +239,9 @@ NIKITA_PASSWORD = os.getenv("NITKITA_PASSWORD")
 NIKITA_SENDER = os.getenv("NITKITA_SENDER")
 
 PAYLER_API_KEY = os.getenv("PAYLER_API_KEY")
+
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]

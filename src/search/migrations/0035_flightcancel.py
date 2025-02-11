@@ -7,20 +7,40 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0034_alter_transaction_rid'),
+        ("search", "0034_alter_transaction_rid"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='FlightCancel',
+            name="FlightCancel",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('flight', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='search.flightrequest')),
-                ('transaction', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='search.transaction')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "flight",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="search.flightrequest",
+                    ),
+                ),
+                (
+                    "transaction",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="search.transaction",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Отмена брони',
-                'verbose_name_plural': 'Отмена брони',
+                "verbose_name": "Отмена брони",
+                "verbose_name_plural": "Отмена брони",
             },
         ),
     ]

@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0039_alter_flightrequest_status_alter_flightrequest_url'),
+        ("search", "0039_alter_flightrequest_status_alter_flightrequest_url"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='flightrequest',
-            name='paid',
-            field=models.FloatField(blank=True, null=True, verbose_name='Всего оплачено'),
+            model_name="flightrequest",
+            name="paid",
+            field=models.FloatField(
+                blank=True, null=True, verbose_name="Всего оплачено"
+            ),
         ),
     ]

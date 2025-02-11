@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0005_alter_airports_code_name_alter_airports_name_and_more'),
+        ("search", "0005_alter_airports_code_name_alter_airports_name_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='countries',
-            name='name',
-            field=models.CharField(max_length=200, verbose_name='Страна'),
+            model_name="countries",
+            name="name",
+            field=models.CharField(max_length=200, verbose_name="Страна"),
         ),
     ]

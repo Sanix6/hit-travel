@@ -7,18 +7,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0018_alter_transaction_name'),
+        ("search", "0018_alter_transaction_name"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='passengers',
-            name='main',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='passengers', to='search.flightrequest'),
+            model_name="passengers",
+            name="main",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="passengers",
+                to="search.flightrequest",
+            ),
         ),
         migrations.AlterField(
-            model_name='segments',
-            name='main',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='segments', to='search.flightrequest'),
+            model_name="segments",
+            name="main",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="segments",
+                to="search.flightrequest",
+            ),
         ),
     ]

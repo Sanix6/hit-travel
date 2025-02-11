@@ -1,5 +1,7 @@
 from os.path import splitext
+
 from rest_framework import serializers
+
 from .models import Stories, StoryVideos, Versions
 from .services import video_extensions
 
@@ -49,9 +51,10 @@ class StoriesSerializers(serializers.ModelSerializer):
 
 class VersionsSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField()
+
     class Meta:
         model = Versions
         fields = "__all__"
-        
+
     def get_date(self, obj):
         return obj.date.strftime("%d %b %Y")

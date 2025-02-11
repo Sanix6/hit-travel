@@ -1,16 +1,16 @@
 from rest_framework import serializers
 
 from .models import (
+    BusTourRequest,
     BusTours,
-    TourProgram,
-    TourCondition,
-    TourExcursions,
+    Category,
     Cities,
     Gallery,
     Reviews,
-    Category,
+    TourCondition,
+    TourExcursions,
+    TourProgram,
     Travelers,
-    BusTourRequest,
 )
 
 
@@ -97,7 +97,9 @@ class GallerySerializer(serializers.ModelSerializer):
     def get_img(self, obj):
         request = self.context.get("request")
         if request is not None:
-            return request.build_absolute_uri(obj.img.url).replace("http://", "https://")
+            return request.build_absolute_uri(obj.img.url).replace(
+                "http://", "https://"
+            )
         return obj.img.url
 
 
@@ -212,7 +214,7 @@ class BusTourRequestSerializer(serializers.ModelSerializer):
             "price",
             "num_of_tourists",
             "meal",
-            "title"
+            "title",
         ]
 
     def create(self, validated_data):

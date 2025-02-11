@@ -6,42 +6,48 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0005_traveler_authority_traveler_inn_traveler_passport_id'),
+        ("account", "0005_traveler_authority_traveler_inn_traveler_passport_id"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='traveler',
-            name='authority',
+            model_name="traveler",
+            name="authority",
         ),
         migrations.AddField(
-            model_name='traveler',
-            name='country',
-            field=models.CharField(blank=True, max_length=255, null=True, verbose_name='Страна'),
+            model_name="traveler",
+            name="country",
+            field=models.CharField(
+                blank=True, max_length=255, null=True, verbose_name="Страна"
+            ),
         ),
         migrations.AddField(
-            model_name='traveler',
-            name='date_of_issue',
-            field=models.DateField(blank=True, null=True, verbose_name='Дата выдачи'),
+            model_name="traveler",
+            name="date_of_issue",
+            field=models.DateField(blank=True, null=True, verbose_name="Дата выдачи"),
         ),
         migrations.AddField(
-            model_name='traveler',
-            name='issued_by',
-            field=models.CharField(blank=True, null=True, verbose_name='Орган выдачи'),
+            model_name="traveler",
+            name="issued_by",
+            field=models.CharField(blank=True, null=True, verbose_name="Орган выдачи"),
         ),
         migrations.AddField(
-            model_name='traveler',
-            name='validity',
-            field=models.DateField(blank=True, null=True, verbose_name='Срок действия'),
+            model_name="traveler",
+            name="validity",
+            field=models.DateField(blank=True, null=True, verbose_name="Срок действия"),
         ),
         migrations.AlterField(
-            model_name='traveler',
-            name='inn',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='ИНН'),
+            model_name="traveler",
+            name="inn",
+            field=models.CharField(
+                blank=True, max_length=100, null=True, verbose_name="ИНН"
+            ),
         ),
         migrations.AlterField(
-            model_name='traveler',
-            name='passport_id',
-            field=models.CharField(blank=True, max_length=255, null=True, verbose_name='ID пасспорта'),
+            model_name="traveler",
+            name="passport_id",
+            field=models.CharField(
+                blank=True, max_length=255, null=True, verbose_name="ID пасспорта"
+            ),
         ),
     ]

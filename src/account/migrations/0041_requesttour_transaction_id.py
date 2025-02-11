@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0040_alter_user_passport_id'),
+        ("account", "0040_alter_user_passport_id"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='requesttour',
-            name='transaction_id',
+            model_name="requesttour",
+            name="transaction_id",
             field=models.CharField(editable=False, max_length=700, null=True),
         ),
     ]

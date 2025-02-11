@@ -4,12 +4,15 @@ from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.shortcuts import render
 from django.urls import include, path
+from django_prometheus import exports
 
 from .yasg import doc_urlpatterns
+import debug_toolbar
 
 
 def index(request):
-    return render(request, "not.html")
+    return render(request, 'not.html')
+
 
 
 urlpatterns = [
@@ -23,10 +26,18 @@ urlpatterns = [
     path("", include("src.flights.urls")),
     path("webhook/", include("src.webhooks.urls")),
     path("ckeditor/", include("ckeditor_uploader.urls")),
-    path("", index),
+    path("index", index),
 ]
 
-# urlpatterns += doc_urlpatterns
+
+urlpatterns += [
+    path("metrics/", exports.ExportToDjangoView),
+]
+urlpatterns += doc_urlpatterns
 urlpatterns += staticfiles_urlpatterns()
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
+    import debug_toolbar
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)), 
+    ]

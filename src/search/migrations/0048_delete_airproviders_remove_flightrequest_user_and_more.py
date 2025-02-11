@@ -6,35 +6,35 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0047_delete_transaction'),
+        ("search", "0047_delete_transaction"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='AirProviders',
+            name="AirProviders",
         ),
         migrations.RemoveField(
-            model_name='flightrequest',
-            name='user',
+            model_name="flightrequest",
+            name="user",
         ),
         migrations.RemoveField(
-            model_name='segments',
-            name='main',
+            model_name="segments",
+            name="main",
         ),
         migrations.RemoveField(
-            model_name='passengers',
-            name='main',
+            model_name="passengers",
+            name="main",
         ),
         migrations.DeleteModel(
-            name='FlightCancel',
+            name="FlightCancel",
         ),
         migrations.DeleteModel(
-            name='Segments',
+            name="Segments",
         ),
         migrations.DeleteModel(
-            name='FlightRequest',
+            name="FlightRequest",
         ),
         migrations.DeleteModel(
-            name='Passengers',
+            name="Passengers",
         ),
     ]

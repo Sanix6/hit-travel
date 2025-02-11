@@ -6,12 +6,15 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('webhooks', '0003_createclient'),
+        ("webhooks", "0003_createclient"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='createclient',
-            options={'verbose_name': 'Клиент CRM', 'verbose_name_plural': 'Клиенты CRM'},
+            name="createclient",
+            options={
+                "verbose_name": "Клиент CRM",
+                "verbose_name_plural": "Клиенты CRM",
+            },
         ),
     ]

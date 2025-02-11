@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0036_alter_manualrequests_options_and_more'),
+        ("account", "0036_alter_manualrequests_options_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='requesttour',
-            name='payler_url',
+            model_name="requesttour",
+            name="payler_url",
             field=models.CharField(max_length=700, null=True),
         ),
     ]

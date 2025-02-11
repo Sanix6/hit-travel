@@ -6,13 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0026_alter_flightrequest_status_alter_transaction_status'),
+        ("search", "0026_alter_flightrequest_status_alter_transaction_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transaction',
-            name='status',
-            field=models.CharField(choices=[('processing', 'В обработке'), ('completed', 'Успешно завершено'), ('timeout', 'Превышено время платежа'), ('canceled', 'Отменен')], max_length=255, verbose_name='Статус'),
+            model_name="transaction",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("processing", "В обработке"),
+                    ("completed", "Успешно завершено"),
+                    ("timeout", "Превышено время платежа"),
+                    ("canceled", "Отменен"),
+                ],
+                max_length=255,
+                verbose_name="Статус",
+            ),
         ),
     ]

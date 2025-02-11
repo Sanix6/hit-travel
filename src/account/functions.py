@@ -1,13 +1,16 @@
+from datetime import datetime
+
+import pdfkit
 import requests
 from django.conf import settings
-from datetime import datetime
 from django.core.files.base import ContentFile
 from django.template.loader import get_template
-import pdfkit
 from num2words import num2words
-from .models import Currency, RequestTour, RequestHotel
-from .services import decrease_bonuses
+
 from src.payment.models import Transaction
+
+from .models import Currency, RequestHotel, RequestTour
+from .services import decrease_bonuses
 
 KEY = settings.KEY
 AUTHLOGIN = settings.AUTHLOGIN
@@ -62,7 +65,9 @@ def create_transaction(tour_request, data, user):
     """Создание транзакции и генерация deeplink."""
     try:
         currency = Currency.objects.get(id=int(data["currency"]))
-        amount = float(tour_request.price) * float(currency.sell) - float(tour_request.paid)
+        amount = float(tour_request.price) * float(currency.sell) - float(
+            tour_request.paid
+        )
 
         transaction = Transaction.objects.create(
             status="processing",
@@ -73,7 +78,9 @@ def create_transaction(tour_request, data, user):
             rid=Transaction.generate_unique_code(),
         )
 
-        tour_request.payler_url = f"https://sandbox.payler.com/gapi/Pay?session_id={transaction.id}"
+        tour_request.payler_url = (
+            f"https://sandbox.payler.com/gapi/Pay?session_id={transaction.id}"
+        )
         tour_request.transaction_id = transaction.id
         tour_request.save()
 
@@ -176,7 +183,7 @@ def hotel_lead(data, user):
         "u_email": data.get("email"),
         "note": note,
         "source": "Мобильное приложение",
-        "tourists": []
+        "tourists": [],
     }
 
     travelers = data.get("travelers", [])
@@ -184,14 +191,16 @@ def hotel_lead(data, user):
         u_birthday = traveler.get("dateofborn")
         u_tk_id = determine_u_tk_id(u_birthday)
 
-        r_data["tourists"].append({
-            "u_tk_id": u_tk_id,
-            "u_zagran_number": traveler.get("passport_id"),
-            "u_zagran_given": traveler.get("issued_by"),
-            "u_name": traveler.get("first_name"),
-            "u_surname": traveler.get("last_name"),
-            "u_birthday": u_birthday,
-        })
+        r_data["tourists"].append(
+            {
+                "u_tk_id": u_tk_id,
+                "u_zagran_number": traveler.get("passport_id"),
+                "u_zagran_given": traveler.get("issued_by"),
+                "u_name": traveler.get("first_name"),
+                "u_surname": traveler.get("last_name"),
+                "u_birthday": u_birthday,
+            }
+        )
 
     response = requests.post(url, json=r_data)
 

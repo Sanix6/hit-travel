@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('flights', '0006_alter_flightrequest_payler_url'),
+        ("flights", "0006_alter_flightrequest_payler_url"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='flightrequest',
-            name='transaction_id',
+            model_name="flightrequest",
+            name="transaction_id",
             field=models.CharField(editable=False, max_length=700, null=True),
         ),
     ]

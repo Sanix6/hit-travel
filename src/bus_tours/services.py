@@ -1,6 +1,8 @@
-from django.conf import settings
 from datetime import datetime
+
 import requests
+from django.conf import settings
+
 from .models import BusTours
 
 KEY = settings.KEY
@@ -13,7 +15,7 @@ def create_service(data, user, request_number):
         "r_id": request_number,
         "type_id": 17,
         "description": f"Автобусный тур: {data['title']}\nСсылка: ",
-        "nights": data.get('nights'),
+        "nights": data.get("nights"),
         "country": data.get("country"),
         "city": data.get("city"),
         "nutrition": data.get("meal"),
@@ -27,20 +29,16 @@ def create_service(data, user, request_number):
     requests.post(url, data=service_data)
 
 
-
 def send_bustour_request(data, user):
     url = f"https://api.u-on.ru/{KEY}/request/create.json"
 
-    note = (
-        f"Страна: {data['country']}\n"
-        f"Город: {data['city']}\n"
-    )
+    note = f"Страна: {data['country']}\n" f"Город: {data['city']}\n"
 
     r_data = {
         "r_dat": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "r_cl_id": user.tourist_id,
-        "r_dat_begin": data['datefrom'],
-        "r_dat_end": data['dateto'],
+        "r_dat_begin": data["datefrom"],
+        "r_dat_end": data["dateto"],
         "u_surname": data["last_name"],
         "u_name": data["first_name"],
         "u_phone": data["phone"],

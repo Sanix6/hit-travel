@@ -6,18 +6,37 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0025_flightrequest_client_email_and_more'),
+        ("search", "0025_flightrequest_client_email_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='flightrequest',
-            name='status',
-            field=models.CharField(choices=[('pending', 'Ожидает оплаты'), ('confirm', 'Подтверждено'), ('canceled', 'Отменено')], default='pending', editable=False, max_length=255, verbose_name='Оплачено'),
+            model_name="flightrequest",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "Ожидает оплаты"),
+                    ("confirm", "Подтверждено"),
+                    ("canceled", "Отменено"),
+                ],
+                default="pending",
+                editable=False,
+                max_length=255,
+                verbose_name="Оплачено",
+            ),
         ),
         migrations.AlterField(
-            model_name='transaction',
-            name='status',
-            field=models.CharField(choices=[('processing', 'В обработке'), ('completed', 'Успешно завершено'), ('timeout', 'Превышено время платежа'), ('refund', 'Отмена')], max_length=255, verbose_name='Статус'),
+            model_name="transaction",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("processing", "В обработке"),
+                    ("completed", "Успешно завершено"),
+                    ("timeout", "Превышено время платежа"),
+                    ("refund", "Отмена"),
+                ],
+                max_length=255,
+                verbose_name="Статус",
+            ),
         ),
     ]

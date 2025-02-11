@@ -1,20 +1,15 @@
-from django.conf import settings
-from datetime import datetime
+import logging
+from datetime import datetime, timedelta
+from urllib.parse import urlencode
 import requests
+from django.conf import settings
 from config.celery import app
 from .models import *
-from django.db import transaction
-from django.shortcuts import get_object_or_404
-import logging
-import  json
-import redis
-from .models import FlightRequest, Passengers, User  
-
+from .models import FlightRequest, Passengers, User
 
 AVIALOGIN = settings.AVIALOGIN
 AVIAPASS = settings.AVIAPASS
 AVIA_URL = settings.AVIA_URL
-
 
 
 KEY = settings.KEY
@@ -23,9 +18,9 @@ AUTHPASS = settings.AUTHPASS
 
 
 logging.basicConfig(
-    filename="myagent.log",  
-    level=logging.INFO,          
-    format="%(asctime)s - %(levelname)s - %(message)s", 
+    filename="myagent.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -33,20 +28,21 @@ logging.basicConfig(level=logging.INFO)
 
 def get_u_tk_id(passenger):
     if passenger.age == "adt":
-        return 1 
+        return 1
     elif passenger.age == "chd":
-        return 4  
+        return 4
     elif passenger.age in ("inf", "ins"):
-        return 5  
+        return 5
     elif passenger.age == "src":
-        return 1  
+        return 1
     elif passenger.age == "yth":
         return 1
     return 1
 
+
 def create_avia(service_id, data):
     url = f"https://api.u-on.ru/{KEY}/avia/create.json"
-    
+
     date_from = datetime.strptime(data.segments.first().date_from, "%d.%m.%Y")
     date_to = datetime.strptime(data.segments.first().date_to, "%d.%m.%Y")
 
@@ -54,36 +50,37 @@ def create_avia(service_id, data):
         "e": "Эконом",
         "b": "Бизнес класс",
         "f": "Первый класс",
-        'w': "Комфорт"
+        "w": "Комфорт",
     }
-    book_class = book_class_map.get(data.book_class.lower(), "Неизвестный класс") 
-
+    book_class = book_class_map.get(data.book_class.lower(), "Неизвестный класс")
 
     r_data = {
         "service_id": service_id,
         "at_dat_begin": date_from.strftime("%Y-%m-%d"),
         "at_time_begin": data.segments.first().time_from,
         "at_dat_end": date_to.strftime("%Y-%m-%d"),
-        "at_time_end": data.segments.first().time_to, 
+        "at_time_end": data.segments.first().time_to,
         "at_flight_number": f"{data.code}{data.flight_number}",
         "at_course_begin": data.segments.first().from_name,
         "at_course_end": data.segments.first().to_name,
         "at_class": book_class,
-        "at_type": data.type, 
+        "at_type": data.type,
         "at_duration": f"{data.segments.first().duration_hour}ч, {data.segments.first().duration_minute}",
         "at_baggage": data.is_baggage,
         "provider": data.provider,
         "at_code_begin": data.segments.first().from_iata,
         "at_code_end": data.segments.first().to_iata,
-        "at_time_begin": data.segments.first().time_from, 
+        "at_time_begin": data.segments.first().time_from,
         "at_time_end": data.segments.first().time_to,
     }
 
-    logging.info(f"Request data for create_avia: {r_data}")  
+    logging.info(f"Request data for create_avia: {r_data}")
 
     try:
         response = requests.post(url, data=r_data)
-        logging.info(f"Response status: {response.status_code}, Response body: {response.text}") 
+        logging.info(
+            f"Response status: {response.status_code}, Response body: {response.text}"
+        )
         if response.status_code == 200:
             logging.info("Создание авиатранспорта прошло успешно.")
             return True
@@ -101,9 +98,9 @@ def create_service(request_number, data):
     if not first_segment:
         raise ValueError("Нет доступных сегментов для создания сервиса.")
 
-    chd_count = getattr(data, 'chd', 0)
-    inf_count = getattr(data, 'inf', 0)
-    adt_count = getattr(data, 'adt', 0)
+    chd_count = getattr(data, "chd", 0)
+    inf_count = getattr(data, "inf", 0)
+    adt_count = getattr(data, "adt", 0)
 
     r_data = {
         "r_id": request_number,
@@ -113,9 +110,9 @@ def create_service(request_number, data):
         "city": first_segment.from_name,
         "price": data.amount,
         "route": f"{first_segment.from_name} -> {first_segment.to_name}",
-        "tourists_count": adt_count, 
-        "tourists_child_count": chd_count,  
-        "tourists_baby_count": inf_count,  
+        "tourists_count": adt_count,
+        "tourists_child_count": chd_count,
+        "tourists_baby_count": inf_count,
         "dat_begin": first_segment.date_from,
         "dat_end": first_segment.date_to,
     }
@@ -134,7 +131,7 @@ def add_tourist_avia(passengers):
 
     for passenger in passengers:
         tourist_data = {
-            "u_name": passenger.first_name, 
+            "u_name": passenger.first_name,
             "u_surname": passenger.last_name,
             "u_phone": passenger.phone,
             "u_email": passenger.email,
@@ -176,13 +173,19 @@ def create_request(data, user):
                 "u_surname": passenger.last_name,
                 "u_name_en": passenger.first_name,
                 "u_surname_en": passenger.last_name,
-                "u_birthday": passenger.birthdate.strftime("%Y-%m-%d") if passenger.birthdate else None,
+                "u_birthday": (
+                    passenger.birthdate.strftime("%Y-%m-%d")
+                    if passenger.birthdate
+                    else None
+                ),
                 "u_zagran_number": passenger.docnum,
-                "u_zagran_expire": passenger.docexp.strftime("%Y-%m-%d") if passenger.docexp else None,
-                "u_tk_id": get_u_tk_id(passenger),  
+                "u_zagran_expire": (
+                    passenger.docexp.strftime("%Y-%m-%d") if passenger.docexp else None
+                ),
+                "u_tk_id": get_u_tk_id(passenger),
             }
             for passenger in passengers
-        ]
+        ],
     }
 
     response = requests.post(url, json=r_data)
@@ -191,11 +194,11 @@ def create_request(data, user):
     else:
         print(f"Error creating request: {response.status_code}, {response.text}")
 
-        
+
 @app.task()
 def booking(token, book_url, id):
     flight = FlightRequest.objects.get(id=id)
-    partner_affiliate_fee = flight.partner_affiliate_fee or 0 
+    partner_affiliate_fee = flight.partner_affiliate_fee or 0
 
     url = f"{AVIA_URL}/avia/book?auth_key={str(token)}&{str(book_url)}&partner_affiliate_fee={partner_affiliate_fee}"
 
@@ -206,7 +209,7 @@ def booking(token, book_url, id):
 
     if response.json().get("success") == True:
         billing_number = str(response.json()["data"]["book"]["order"]["billing_number"])
-        
+
         flight.billing_number = billing_number
         flight.save()
 
@@ -214,10 +217,34 @@ def booking(token, book_url, id):
     else:
         return response.json()["data"].get("message", "Unknown error")
 
+
 @app.task()
 def ticketed(token, id):
     url = f"{AVIA_URL}/payment/pay-with-balance?auth_key={str(token)}&billing={id.billing_number}"
     response = requests.get(url)
-    
+
     if response.status_code == 200:
         return True
+
+
+@app.task()
+def fetch_flights_task(url):
+    response = requests.get(url)
+    return response.json().get("data", {})
+
+@app.task()
+def fetch_nearest_flight_task(token, base_url, query_params, offset, flight_date):
+    nearest_date = (flight_date + timedelta(days=offset)).strftime('%d.%m.%Y')
+    query_params['segments[0][date]'] = nearest_date
+    encoded_params = urlencode(query_params, safe='[]')
+    url = f"{base_url}/avia/search-recommendations?auth_key={token}&{encoded_params}&count=1"
+    response = requests.get(url)
+    nearest_data = response.json().get("data", {})
+    nearest_flight = nearest_data.get('flights', [])[0] if nearest_data.get('flights') else None
+
+    if nearest_flight:
+        return {
+            "date": nearest_date,
+            "price": nearest_flight.get('price', {}).get('KGS', {}).get('amount', 0),
+        }
+    return None

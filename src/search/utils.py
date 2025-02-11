@@ -1,14 +1,23 @@
+import time
+
 import requests
 from rest_framework.response import Response
-import time
+from django.conf import settings
+
+
+authlogin = settings.AUTHLOGIN
+authpass = settings.AUTHPASS
 
 def build_search_url(authlogin, authpass, query_params):
     base_url = (
         f"http://tourvisor.ru/xml/search.php?format=json"
         f"&authlogin={authlogin}&authpass={authpass}"
     )
-    params = "&".join(f"{key}={value}" for key, value in query_params.items() if key != "directOnly")
+    params = "&".join(
+        f"{key}={value}" for key, value in query_params.items() if key != "directOnly"
+    )
     return f"{base_url}&{params}"
+
 
 def get_search_result(authlogin, authpass, query_params):
     search_url = build_search_url(authlogin, authpass, query_params)
@@ -27,14 +36,15 @@ def convert_currency(data, usd_exchange, eur_exchange):
             exchange_rate = usd_exchange if hotel_currency == "USD" else eur_exchange
             hotel["currency"] = "KGS"
             hotel["price"] = int(hotel.get("price", 0) * exchange_rate)
-            
+
             for tour in hotel.get("tours", {}).get("tour", []):
                 tour_currency = tour.get("currency")
                 exchange_rate = usd_exchange if tour_currency == "USD" else eur_exchange
                 tour["currency"] = "KGS"
                 tour["price"] = int(tour.get("price", 0) * exchange_rate)
-    
+
     return data
+
 
 def fetch_result_data(authlogin, authpass, requestid, page):
     url = (

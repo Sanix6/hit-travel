@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('flights', '0015_alter_flightrequest_partner_affiliate_fee'),
+        ("flights", "0015_alter_flightrequest_partner_affiliate_fee"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='airproviders',
-            name='title',
-            field=models.CharField(max_length=500, unique=True, verbose_name='Название'),
+            model_name="airproviders",
+            name="title",
+            field=models.CharField(
+                max_length=500, unique=True, verbose_name="Название"
+            ),
         ),
     ]

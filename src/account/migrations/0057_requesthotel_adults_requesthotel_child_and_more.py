@@ -6,48 +6,65 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0056_alter_requesthotel_price_netto'),
+        ("account", "0056_alter_requesthotel_price_netto"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='requesthotel',
-            name='adults',
-            field=models.PositiveIntegerField(default=1, verbose_name='Количество взрослых'),
+            model_name="requesthotel",
+            name="adults",
+            field=models.PositiveIntegerField(
+                default=1, verbose_name="Количество взрослых"
+            ),
         ),
         migrations.AddField(
-            model_name='requesthotel',
-            name='child',
-            field=models.PositiveIntegerField(default=0, verbose_name='Количество детей'),
+            model_name="requesthotel",
+            name="child",
+            field=models.PositiveIntegerField(
+                default=0, verbose_name="Количество детей"
+            ),
         ),
         migrations.AddField(
-            model_name='requesthotel',
-            name='flydate',
-            field=models.DateField(blank=True, null=True, verbose_name='Дата вылета'),
+            model_name="requesthotel",
+            name="flydate",
+            field=models.DateField(blank=True, null=True, verbose_name="Дата вылета"),
         ),
         migrations.AddField(
-            model_name='requesthotel',
-            name='meal',
-            field=models.CharField(blank=True, max_length=10, null=True, verbose_name='Питание'),
+            model_name="requesthotel",
+            name="meal",
+            field=models.CharField(
+                blank=True, max_length=10, null=True, verbose_name="Питание"
+            ),
         ),
         migrations.AddField(
-            model_name='requesthotel',
-            name='mealcode',
-            field=models.PositiveIntegerField(blank=True, null=True, verbose_name='Код питания'),
+            model_name="requesthotel",
+            name="mealcode",
+            field=models.PositiveIntegerField(
+                blank=True, null=True, verbose_name="Код питания"
+            ),
         ),
         migrations.AddField(
-            model_name='requesthotel',
-            name='mealrussian',
-            field=models.CharField(blank=True, max_length=255, null=True, verbose_name='Питание (на русском)'),
+            model_name="requesthotel",
+            name="mealrussian",
+            field=models.CharField(
+                blank=True,
+                max_length=255,
+                null=True,
+                verbose_name="Питание (на русском)",
+            ),
         ),
         migrations.AddField(
-            model_name='requesthotel',
-            name='nights',
-            field=models.PositiveIntegerField(blank=True, null=True, verbose_name='Количество ночей'),
+            model_name="requesthotel",
+            name="nights",
+            field=models.PositiveIntegerField(
+                blank=True, null=True, verbose_name="Количество ночей"
+            ),
         ),
         migrations.AddField(
-            model_name='requesthotel',
-            name='placement',
-            field=models.CharField(blank=True, max_length=10, null=True, verbose_name='Размещение'),
+            model_name="requesthotel",
+            name="placement",
+            field=models.CharField(
+                blank=True, max_length=10, null=True, verbose_name="Размещение"
+            ),
         ),
     ]

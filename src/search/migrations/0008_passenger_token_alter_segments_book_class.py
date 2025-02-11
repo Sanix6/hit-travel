@@ -6,28 +6,52 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0007_flightrequest_segments'),
+        ("search", "0007_flightrequest_segments"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Passenger',
+            name="Passenger",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('first_name', models.CharField(max_length=150, verbose_name='Имя')),
-                ('last_name', models.CharField(max_length=150, verbose_name='Фамилия')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("first_name", models.CharField(max_length=150, verbose_name="Имя")),
+                ("last_name", models.CharField(max_length=150, verbose_name="Фамилия")),
             ],
         ),
         migrations.CreateModel(
-            name='Token',
+            name="Token",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('token', models.CharField(max_length=500)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("token", models.CharField(max_length=500)),
             ],
         ),
         migrations.AlterField(
-            model_name='segments',
-            name='book_class',
-            field=models.CharField(choices=[('e', 'Эконом класс'), ('b', 'Бизнес класс'), ('f', 'Первый класс'), ('w', 'Комфорт')], verbose_name='Класс'),
+            model_name="segments",
+            name="book_class",
+            field=models.CharField(
+                choices=[
+                    ("e", "Эконом класс"),
+                    ("b", "Бизнес класс"),
+                    ("f", "Первый класс"),
+                    ("w", "Комфорт"),
+                ],
+                verbose_name="Класс",
+            ),
         ),
     ]

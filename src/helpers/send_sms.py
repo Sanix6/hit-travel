@@ -1,5 +1,7 @@
-import custom_env
 import requests
+
+import custom_env
+
 
 def send_sms(phone, message):
     # new_phone = "".join(filter(str.isdigit, phone))
@@ -8,9 +10,7 @@ def send_sms(phone, message):
     url = "https://smspro.nikita.kg/api/message"
     response = requests.post(url, data=xml_data.encode("utf-8"), headers=headers)
     if response.status_code == 200:
-        with open("nikita.txt", 'a') as file:
+        with open("nikita.txt", "a") as file:
             file.write(f"{phone} {message} - {response.text} \n")
         return True
     return False
-
-    

@@ -6,18 +6,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0015_alter_flightrequest_amount_and_more'),
+        ("search", "0015_alter_flightrequest_amount_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='passengers',
-            name='gender',
-            field=models.CharField(blank=True, choices=[('M', 'Мужчина'), ('F', 'Женщина'), ('MI', 'Младенец мужского пола'), ('FI', 'Младенец женского пола')], max_length=5, null=True, verbose_name='Пол'),
+            model_name="passengers",
+            name="gender",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("M", "Мужчина"),
+                    ("F", "Женщина"),
+                    ("MI", "Младенец мужского пола"),
+                    ("FI", "Младенец женского пола"),
+                ],
+                max_length=5,
+                null=True,
+                verbose_name="Пол",
+            ),
         ),
         migrations.AlterField(
-            model_name='segments',
-            name='date',
-            field=models.DateField(blank=True, null=True, verbose_name='Дата и время вылета'),
+            model_name="segments",
+            name="date",
+            field=models.DateField(
+                blank=True, null=True, verbose_name="Дата и время вылета"
+            ),
         ),
     ]

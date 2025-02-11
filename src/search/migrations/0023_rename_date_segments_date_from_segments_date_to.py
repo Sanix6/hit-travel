@@ -6,18 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0022_alter_segments_date'),
+        ("search", "0022_alter_segments_date"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='segments',
-            old_name='date',
-            new_name='date_from',
+            model_name="segments",
+            old_name="date",
+            new_name="date_from",
         ),
         migrations.AddField(
-            model_name='segments',
-            name='date_to',
-            field=models.CharField(blank=True, max_length=20, null=True, verbose_name='Дата прилета'),
+            model_name="segments",
+            name="date_to",
+            field=models.CharField(
+                blank=True, max_length=20, null=True, verbose_name="Дата прилета"
+            ),
         ),
     ]

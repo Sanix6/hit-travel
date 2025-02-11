@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('webhooks', '0001_initial'),
+        ("webhooks", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='createrequest',
-            name='uon_id',
+            model_name="createrequest",
+            name="uon_id",
             field=models.IntegerField(default=46194),
         ),
     ]

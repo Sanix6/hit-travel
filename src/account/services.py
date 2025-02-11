@@ -1,12 +1,13 @@
-import requests
-import pdfkit
-from django.conf import settings
-from django.utils.translation import gettext_lazy as _
-from django.template.loader import get_template
-from django.core.files.base import ContentFile
-from datetime import datetime, timedelta
-from num2words import num2words
 import logging
+from datetime import datetime, timedelta
+
+import pdfkit
+import requests
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.template.loader import get_template
+from django.utils.translation import gettext_lazy as _
+from num2words import num2words
 
 KEY = settings.KEY
 AUTHLOGIN = settings.AUTHLOGIN
@@ -14,12 +15,15 @@ AUTHPASS = settings.AUTHPASS
 TOURVISOR_URL = "http://tourvisor.ru/xml/hotel.php"
 UON_URL = f"https://api.u-on.ru/{KEY}/service/create.json"
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 def update_user(data, user):
     """Updates user data and syncs with the external U-ON API."""
     url = f"https://api.u-on.ru/{KEY}/user/update/{user.tourist_id}.json"
-    
+
     u_sex = "m" if data.get("gender") == "м" else "f"
 
     r_data = {
@@ -44,6 +48,7 @@ def update_user(data, user):
     response.raise_for_status()
     logging.info("User data updated successfully.")
 
+
 def get_user_by_phone(phone):
     """Fetches a user by phone number from the U-ON API."""
     url = f"https://api.u-on.ru/{KEY}/user/phone/{phone}.json"
@@ -53,26 +58,28 @@ def get_user_by_phone(phone):
         return response.json().get("users", [])[0]
     return None
 
-def bonus_card_create(user):
-    """Creates and activates a bonus card for a user."""
-    data_1 = {
-        "number": f"{user.bcard_number}000",
-        "user_id": int(user.tourist_id),
-    }
 
-    url_1 = f"https://api.u-on.ru/{KEY}/bcard/create.json"
-    res_1 = requests.post(url_1, json=data_1)
-    res_1.raise_for_status()
+# def bonus_card_create(user):
+#     """Creates and activates a bonus card for a user."""
+#     data_1 = {
+#         "number": f"{user.bcard_number}000",
+#         "user_id": int(user.tourist_id),
+#     }
 
-    bcard_id = res_1.json().get("id")
-    user.bcard_id = bcard_id
-    user.save()
+#     url_1 = f"https://api.u-on.ru/{KEY}/bcard/create.json"
+#     res_1 = requests.post(url_1, json=data_1)
+#     res_1.raise_for_status()
 
-    data_2 = {"bc_number": f"{user.bcard_number}000", "user_id": int(user.tourist_id)}
-    url_2 = f"https://api.u-on.ru/{KEY}/bcard-activate/create.json"
-    requests.post(url_2, json=data_2).raise_for_status()
-    logging.info("Bonus card created and activated successfully.")
-    return True
+#     bcard_id = res_1.json().get("id")
+#     user.bcard_id = bcard_id
+#     user.save()
+
+#     data_2 = {"bc_number": f"{user.bcard_number}000", "user_id": int(user.tourist_id)}
+#     url_2 = f"https://api.u-on.ru/{KEY}/bcard-activate/create.json"
+#     requests.post(url_2, json=data_2).raise_for_status()
+#     logging.info("Bonus card created and activated successfully.")
+#     return True
+
 
 def create_dogovor(instance):
     """Generates a PDF agreement for the given instance."""
@@ -80,7 +87,9 @@ def create_dogovor(instance):
     price_word = num2words(float(instance.price), lang="ru")
     surcharge_word = num2words(int(instance.surcharge), lang="ru")
 
-    tour = requests.get(f"https://hit-travel.org/api/detail/tour/{instance.tourid}").json()
+    tour = requests.get(
+        f"https://hit-travel.org/api/detail/tour/{instance.tourid}"
+    ).json()
 
     context = {
         "obj": instance,
@@ -103,16 +112,17 @@ def create_dogovor(instance):
     )
     logging.info("Agreement PDF generated successfully.")
 
+
 def add_tourist(travelers):
     """Adds multiple travelers to the U-ON system."""
-    url = f"https://api.u-on.ru/{KEY}/user/create.json"  
+    url = f"https://api.u-on.ru/{KEY}/user/create.json"
     tourist_ids = []
 
     for user in travelers:
         tourist_data = {
             "u_name": user.get("first_name"),
             "u_surname": user.get("last_name"),
-            "u_phone": user.get("phone"),  
+            "u_phone": user.get("phone"),
             "u_email": user.get("email"),
         }
 
@@ -125,6 +135,7 @@ def add_tourist(travelers):
 
     logging.info("All tourists added successfully.")
     return tourist_ids
+
 
 def create_avia_from_tour(tour_data, service_id):
     """Creates aviation details for the given tour data."""
@@ -158,7 +169,9 @@ def create_avia_from_tour(tour_data, service_id):
             "at_flight_number": forward_flight["number"],
             "at_course_begin": forward_flight["departure"]["port"]["name"],
             "at_course_end": forward_flight["arrival"]["port"]["name"],
-            "at_class": book_class_map.get(forward_flight["class"], "Неизвестный класс"),
+            "at_class": book_class_map.get(
+                forward_flight["class"], "Неизвестный класс"
+            ),
             "at_type": "RT",
             "at_duration": None,
             "at_baggage": forward_flight.get("baggage"),
@@ -174,14 +187,15 @@ def create_avia_from_tour(tour_data, service_id):
     except requests.RequestException as e:
         logging.error(f"Error creating aviation data: {e}")
         return False
-    
+
+
 def create_service(request_number, data=None, instance=None):
     url = f"https://api.u-on.ru/{KEY}/service/create.json"
 
     tourid = (
-        data.get("tourid") if isinstance(data, dict) else
-        getattr(data, "tourid", None) or
-        getattr(instance, "tourid", None)
+        data.get("tourid")
+        if isinstance(data, dict)
+        else getattr(data, "tourid", None) or getattr(instance, "tourid", None)
     )
     if not tourid:
         return False
@@ -197,7 +211,7 @@ def create_service(request_number, data=None, instance=None):
         return False
 
     post_data = {
-        "r_id": data['id'],
+        "r_id": data["id"],
         "type_id": 12,
         "description": (
             f"Тур: {tour_data.get('tourname', 'Unknown')}\n"
@@ -222,10 +236,11 @@ def create_service(request_number, data=None, instance=None):
 
     response = requests.post(url, data=post_data)
     if response.status_code == 200:
-        service_id = response.json().get('id')
+        service_id = response.json().get("id")
         create_avia_from_tour(tour_data, service_id)
         return response.json()
     return False
+
 
 def create_lead(data, user, instance=None):
     url = f"https://api.u-on.ru/{KEY}/request/create.json"
@@ -233,9 +248,9 @@ def create_lead(data, user, instance=None):
     update_user(data, user)
 
     tourid = (
-        data.get("tourid") if isinstance(data, dict) else
-        getattr(data, "tourid", None) or
-        getattr(instance, "tourid", None)
+        data.get("tourid")
+        if isinstance(data, dict)
+        else getattr(data, "tourid", None) or getattr(instance, "tourid", None)
     )
     if not tourid:
         return False
@@ -284,14 +299,14 @@ def create_lead(data, user, instance=None):
                 "u_tk_id": tour_data.get("adults", 0),
             }
             for traveler in data.get("travelers", [])
-        ]
+        ],
     }
 
     res = requests.post(url, json=r_data)
 
     if res.status_code == 200:
         response_data = res.json()
-        data['id'] = response_data.get('id')
+        data["id"] = response_data.get("id")
         add_tourist(data.get("travelers", []))
         create_service(response_data.get("id"), data=data)
         return response_data
@@ -320,23 +335,23 @@ def add_lead_on_creation(sender, instance):
     url = f"https://api.u-on.ru/{KEY}/request/create.json"
 
     if instance.user:
-            user = instance.user
-            instance.email = user.email
-            instance.phone = user.phone
-            instance.first_name = user.first_name
-            instance.last_name = user.last_name
-            instance.gender = user.gender
-            instance.dateofborn = user.dateofborn
-            instance.inn = user.inn
-            instance.passport_id = user.passport_id
-            instance.date_of_issue = user.date_of_issue
-            instance.issued_by = user.issued_by
-            instance.validity = user.validity
-            instance.city = user.city
-            instance.country = user.county
-            instance.passport_front = user.passport_front
-            instance.passport_back = user.passport_back
-            instance.save()
+        user = instance.user
+        instance.email = user.email
+        instance.phone = user.phone
+        instance.first_name = user.first_name
+        instance.last_name = user.last_name
+        instance.gender = user.gender
+        instance.dateofborn = user.dateofborn
+        instance.inn = user.inn
+        instance.passport_id = user.passport_id
+        instance.date_of_issue = user.date_of_issue
+        instance.issued_by = user.issued_by
+        instance.validity = user.validity
+        instance.city = user.city
+        instance.country = user.county
+        instance.passport_front = user.passport_front
+        instance.passport_back = user.passport_back
+        instance.save()
 
     note = f"Оператор: {instance.operatorlink}\n"
 
@@ -409,7 +424,6 @@ def add_tourist_on_user_creation(sender, instance):
     instance.tourist_id = res.json()["id"]
     instance.is_verified = True
     instance.save()
-    bonus_card_create(instance)
+    # bonus_card_create(instance)
 
     return
-

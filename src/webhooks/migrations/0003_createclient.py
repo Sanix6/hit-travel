@@ -6,23 +6,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('webhooks', '0002_alter_createrequest_uon_id'),
+        ("webhooks", "0002_alter_createrequest_uon_id"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CreateClient',
+            name="CreateClient",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('uon_id', models.IntegerField(default=46194)),
-                ('uon_subdomain', models.CharField(max_length=255)),
-                ('datetime', models.DateTimeField()),
-                ('type_id', models.IntegerField()),
-                ('client_id', models.IntegerField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("uon_id", models.IntegerField(default=46194)),
+                ("uon_subdomain", models.CharField(max_length=255)),
+                ("datetime", models.DateTimeField()),
+                ("type_id", models.IntegerField()),
+                ("client_id", models.IntegerField()),
             ],
             options={
-                'verbose_name': 'Клиент CRM',
-                'verbose_name_plural': 'Клиент CRM',
+                "verbose_name": "Клиент CRM",
+                "verbose_name_plural": "Клиент CRM",
             },
         ),
     ]

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0054_rename_hotelcode_requesthotel_hotelid'),
+        ("account", "0054_rename_hotelcode_requesthotel_hotelid"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='requesthotel',
-            name='price_netto',
-            field=models.FloatField(blank=True, null=True, verbose_name=''),
+            model_name="requesthotel",
+            name="price_netto",
+            field=models.FloatField(blank=True, null=True, verbose_name=""),
         ),
     ]

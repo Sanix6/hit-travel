@@ -6,22 +6,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0006_remove_stories_name'),
+        ("main", "0006_remove_stories_name"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Versions',
+            name="Versions",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('version', models.CharField(max_length=255, verbose_name='Версия')),
-                ('appstore', models.URLField(verbose_name='App Store')),
-                ('googleplay', models.URLField(verbose_name='Google Play')),
-                ('date', models.DateTimeField(auto_now_add=True, verbose_name='Дата')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("version", models.CharField(max_length=255, verbose_name="Версия")),
+                ("appstore", models.URLField(verbose_name="App Store")),
+                ("googleplay", models.URLField(verbose_name="Google Play")),
+                ("date", models.DateTimeField(auto_now_add=True, verbose_name="Дата")),
             ],
             options={
-                'verbose_name': '',
-                'verbose_name_plural': '',
+                "verbose_name": "",
+                "verbose_name_plural": "",
             },
         ),
     ]

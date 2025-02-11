@@ -6,22 +6,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0007_versions'),
+        ("main", "0007_versions"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='versions',
-            options={'verbose_name': 'Версия приложения', 'verbose_name_plural': 'Версии приложения'},
+            name="versions",
+            options={
+                "verbose_name": "Версия приложения",
+                "verbose_name_plural": "Версии приложения",
+            },
         ),
         migrations.AlterField(
-            model_name='versions',
-            name='appstore',
-            field=models.URLField(default='https://apps.apple.com/kg/app/hit-travel/id6467560261', verbose_name='App Store'),
+            model_name="versions",
+            name="appstore",
+            field=models.URLField(
+                default="https://apps.apple.com/kg/app/hit-travel/id6467560261",
+                verbose_name="App Store",
+            ),
         ),
         migrations.AlterField(
-            model_name='versions',
-            name='googleplay',
-            field=models.URLField(default='https://play.google.com/store/apps/details?id=com.hit.travel', verbose_name='Google Play'),
+            model_name="versions",
+            name="googleplay",
+            field=models.URLField(
+                default="https://play.google.com/store/apps/details?id=com.hit.travel",
+                verbose_name="Google Play",
+            ),
         ),
     ]

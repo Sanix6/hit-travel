@@ -8,18 +8,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0008_alter_requesttour_manager'),
+        ("account", "0008_alter_requesttour_manager"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='whatsapp',
-            field=models.CharField(blank=True, help_text='без (+, 0)      Для менеджеров', max_length=230, null=True, verbose_name="What's App номер"),
+            model_name="user",
+            name="whatsapp",
+            field=models.CharField(
+                blank=True,
+                help_text="без (+, 0)      Для менеджеров",
+                max_length=230,
+                null=True,
+                verbose_name="What's App номер",
+            ),
         ),
         migrations.AlterField(
-            model_name='requesttour',
-            name='manager',
-            field=models.ForeignKey(blank=True, limit_choices_to={'groups__name': 'Managers'}, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='tour_manager', to=settings.AUTH_USER_MODEL),
+            model_name="requesttour",
+            name="manager",
+            field=models.ForeignKey(
+                blank=True,
+                limit_choices_to={"groups__name": "Managers"},
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="tour_manager",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

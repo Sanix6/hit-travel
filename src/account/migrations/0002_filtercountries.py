@@ -6,20 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0001_initial'),
+        ("account", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='FilterCountries',
+            name="FilterCountries",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=200, verbose_name='Страна')),
-                ('img', models.ImageField(upload_to='flags', verbose_name='Флаг')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=200, verbose_name="Страна")),
+                ("img", models.ImageField(upload_to="flags", verbose_name="Флаг")),
             ],
             options={
-                'verbose_name': 'Страна',
-                'verbose_name_plural': 'Страны',
+                "verbose_name": "Страна",
+                "verbose_name_plural": "Страны",
             },
         ),
     ]

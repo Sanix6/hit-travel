@@ -6,11 +6,11 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0046_alter_flightcancel_transaction'),
+        ("search", "0046_alter_flightcancel_transaction"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='Transaction',
+            name="Transaction",
         ),
     ]

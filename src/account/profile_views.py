@@ -1,23 +1,29 @@
 import os
 import shutil
+
 import requests
-from rest_framework import permissions, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.generics import ListAPIView, RetrieveAPIView
-from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
-from .serializers import *
-from src.search.services import get_isfavorite
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework import permissions, status
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from src.main.models import Currency
 from src.payment.models import Transaction
+from src.search.services import get_isfavorite
+
+from .serializers import *
+
 
 class UpdateProfilePhotoAPIView(APIView):
     queryset = User.objects.all()
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        serializer = UpdateProfilePhotoSerializer(instance=request.user, data=request.data)
+        serializer = UpdateProfilePhotoSerializer(
+            instance=request.user, data=request.data
+        )
         if serializer.is_valid():
             serializer.save()
             return Response({"response": True, "message": "Успешно обновлено"})
@@ -42,7 +48,12 @@ class RemoveProfilePhotoAPIView(APIView):
             return Response(
                 {"response": True, "message": "Фотография профиля удалена."}
             )
-        return Response({"response": False,"messafe": "Нет фотографии профиля, которую можно удалить.",})
+        return Response(
+            {
+                "response": False,
+                "messafe": "Нет фотографии профиля, которую можно удалить.",
+            }
+        )
 
 
 class ProfileInfoAPIView(APIView):
@@ -91,7 +102,7 @@ class MyTourAPIView(APIView):
         authpass = settings.AUTHPASS
         user = request.user
 
-        queryset = RequestTour.objects.filter(user=request.user).order_by('-id')
+        queryset = RequestTour.objects.filter(user=request.user).order_by("-id")
         response = []
 
         for item in queryset:
@@ -99,10 +110,11 @@ class MyTourAPIView(APIView):
 
             data = serializer.data
 
-
             tourid = data["tourid"]
             tourrequest_id = data["id"]
-            status = RequestTour.objects.filter(tourid=tourid, user=request.user).first()
+            status = RequestTour.objects.filter(
+                tourid=tourid, user=request.user
+            ).first()
             detail = requests.get(
                 f"http://tourvisor.ru/xml/actualize.php?tourid={tourid}&request=0"
                 f"&format=json&authpass={authpass}&authlogin={authlogin}"
@@ -127,7 +139,8 @@ class MyTourAPIView(APIView):
                 continue
 
         return Response(response)
-        
+
+
 class MyTourDetailAPIVIew(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -136,7 +149,7 @@ class MyTourDetailAPIVIew(APIView):
         authpass = settings.AUTHPASS
         user = request.user
 
-        queryset = RequestTour.objects.filter(id=pk, user=request.user).order_by('-id')
+        queryset = RequestTour.objects.filter(id=pk, user=request.user).order_by("-id")
         response = []
 
         for item in queryset:
@@ -161,15 +174,17 @@ class MyTourDetailAPIVIew(APIView):
                 d["transaction_id"] = data["transaction_id"]
                 d["first_name"] = data["first_name"]
                 d["last_name"] = data["last_name"]
-                d["gender"] = 'Мужчина' if data["gender"] == 'м' else 'Женщина'
+                d["gender"] = "Мужчина" if data["gender"] == "м" else "Женщина"
                 d["phone"] = data["phone"]
                 d["email"] = data["email"]
                 d["country"] = data["country"]
                 d["passport_id"] = data["passport_id"]
                 try:
                     transaction = Transaction.objects.get(tour_id=tourrequest_id)
-                    d["deeplink"] = f"https://app.mbank.kg/deeplink?service=67ec3602-7c44-415c-a2cd-08d3376216f5&PARAM1={transaction.rid}&amount={int(transaction.amount)}"
-                    
+                    d["deeplink"] = (
+                        f"https://app.mbank.kg/deeplink?service=67ec3602-7c44-415c-a2cd-08d3376216f5&PARAM1={transaction.rid}&amount={int(transaction.amount)}"
+                    )
+
                 except Transaction.DoesNotExist:
                     d["deeplink"] = None
                 d["bonus"] = data["bonuses"] if data["bonuses"] is not None else 0
@@ -197,7 +212,7 @@ class MyTourDetailAPIVIew(APIView):
                 continue
 
         return Response(response)
-    
+
 
 class BonusHistoryAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -229,23 +244,21 @@ class ManualRequestsView(ListAPIView):
 
     def get_queryset(self):
         queryset = ManualRequests.objects.filter(user=self.request.user)
-        
-        valid_queryset = [
+        return [
             instance for instance in queryset
-            if ManualRequestsSerializer(instance).data
+            if ManualRequestsSerializer(instance).data  
         ]
-        
-        return valid_queryset
-    
-    
+
+
 class ManualRequestsDetailView(RetrieveAPIView):
     serializer_class = ManualRequestsSerializer
 
     def get_queryset(self):
-        return ManualRequests.objects.filter(user=self.request.user, id=self.kwargs.get("pk"))
-    
+        return ManualRequests.objects.filter(
+            user=self.request.user, id=self.kwargs.get("pk")
+        )
 
-    
+
 # class CreateAgreementPDF(APIView):
 #     def get(self, request, tourrequest_id):
 #         obj = TourRequest.objects.get(id=tourrequest_id)

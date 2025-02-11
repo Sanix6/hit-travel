@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('flights', '0013_flightrequest_adt_flightrequest_chd_and_more'),
+        ("flights", "0013_flightrequest_adt_flightrequest_chd_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='flightrequest',
-            name='partner_affiliate_fee',
-            field=models.IntegerField(blank=True, null=True, verbose_name='Сборы'),
+            model_name="flightrequest",
+            name="partner_affiliate_fee",
+            field=models.IntegerField(blank=True, null=True, verbose_name="Сборы"),
         ),
     ]

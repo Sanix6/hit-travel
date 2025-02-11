@@ -6,11 +6,11 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0008_passenger_token_alter_segments_book_class'),
+        ("search", "0008_passenger_token_alter_segments_book_class"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='Token',
+            name="Token",
         ),
     ]

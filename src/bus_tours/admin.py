@@ -1,24 +1,26 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
+
 from .models import (
+    BusTourRequest,
     BusTours,
+    Category,
+    Cities,
+    Gallery,
+    Meals,
+    Reviews,
     TourCondition,
     TourExcursions,
     TourProgram,
-    Cities,
-    Gallery,
-    Reviews,
-    Category,
     Travelers,
-    BusTourRequest,
-    Meals
 )
 
 
 @admin.register(Category)
 class Category(admin.ModelAdmin):
-    list_display = ['id', 'name']
-    
+    list_display = ["id", "name"]
+
+
 admin.site.register(Meals)
 
 
@@ -94,7 +96,7 @@ class BusTourRequestInlin(admin.ModelAdmin):
     list_display = ("id", "user", "tour", "status", "payment_status", "created_at")
     list_display_links = ("id", "user", "tour")
     inlines = (TravelersInline,)
-    
+
     fieldsets = (
         (
             None,

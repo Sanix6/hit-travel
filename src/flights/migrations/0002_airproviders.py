@@ -6,21 +6,37 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('flights', '0001_initial'),
+        ("flights", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='AirProviders',
+            name="AirProviders",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(max_length=150, verbose_name='Код')),
-                ('title', models.CharField(max_length=500, verbose_name='Название')),
-                ('img', models.ImageField(blank=True, null=True, upload_to='airlines', verbose_name='Логотип')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("code", models.CharField(max_length=150, verbose_name="Код")),
+                ("title", models.CharField(max_length=500, verbose_name="Название")),
+                (
+                    "img",
+                    models.ImageField(
+                        blank=True,
+                        null=True,
+                        upload_to="airlines",
+                        verbose_name="Логотип",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Авиакомпания',
-                'verbose_name_plural': 'Авиакомпании',
+                "verbose_name": "Авиакомпания",
+                "verbose_name_plural": "Авиакомпании",
             },
         ),
     ]

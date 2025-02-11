@@ -1,9 +1,11 @@
-import locale
-import requests
-from rest_framework import serializers
-from django.utils.translation import gettext_lazy as _
-from django.conf import settings
 import json
+import locale
+
+import requests
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+from rest_framework import serializers
+
 from src.account.models import *
 from src.payment.models import Transaction
 
@@ -202,7 +204,7 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
             "validity",
             "dateofborn",
             "city",
-            "county"
+            "county",
             # "bonus_history",
         ]
 
@@ -214,11 +216,10 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
 
             if bonuses.status_code != 200:
                 return None
-            
+
             bcard_value = bonuses.json().get("user", [])[0].get("bcard_value", None)
             return bcard_value
 
-             
         return None
 
     def get_photo(self, obj):
@@ -253,10 +254,10 @@ class UpdateInfoSerializer(serializers.ModelSerializer):
 
 class TravelerSerializer(serializers.ModelSerializer):
     dateofborn = serializers.DateField(required=False)
+
     class Meta:
         model = Traveler
-        fields = ['first_name', 'last_name', 'dateofborn', 'passport_id', 'issued_by']
-
+        fields = ["first_name", "last_name", "dateofborn", "passport_id", "issued_by"]
 
 
 class DocumentsSerializer(serializers.ModelSerializer):
@@ -325,16 +326,16 @@ class TourRequestSerializer(serializers.ModelSerializer):
     validity = serializers.DateField(required=True)
     inn = serializers.CharField(required=True)
 
-    def get_payler_url(self, obj): 
+    def get_payler_url(self, obj):
         return obj.payler_url
 
-    def get_transaction_id(self, obj): 
+    def get_transaction_id(self, obj):
         return obj.transaction_id
 
     def create(self, validated_data):
         try:
             travelers_list = validated_data.pop("travelers", [])
-            with open('example.txt', 'a') as file:
+            with open("example.txt", "a") as file:
                 file.write(f"{validated_data},\n\n\n")
             instance = RequestTour.objects.create(**validated_data)
             for traveler in travelers_list:
@@ -342,6 +343,7 @@ class TourRequestSerializer(serializers.ModelSerializer):
             return instance
         except KeyError:
             return super().create(validated_data)
+
 
 # if data from U-on
 # class TouristSerializer(serializers.ModelSerializer):
@@ -361,17 +363,19 @@ class FAQListSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class TourHistorySerializers():
+class TourHistorySerializers:
     pass
+
 
 from src.payment.models import Transaction
 
 
 class HotelTravelerSerializer(serializers.ModelSerializer):
     dateofborn = serializers.DateField(required=False)
+
     class Meta:
         model = HotelTraveler
-        fields = ['first_name', 'last_name', 'dateofborn', 'passport_id', 'issued_by']
+        fields = ["first_name", "last_name", "dateofborn", "passport_id", "issued_by"]
 
 
 class RequestHotelSerializer(serializers.ModelSerializer):
@@ -379,69 +383,84 @@ class RequestHotelSerializer(serializers.ModelSerializer):
     amount = serializers.SerializerMethodField(read_only=True)
     payler_url = serializers.SerializerMethodField(read_only=True)
     travelers = HotelTravelerSerializer(many=True, required=False)
-    
+
     class Meta:
         model = RequestHotel
         fields = [
-            'id', 'hotelid', 'first_name', 'phone', 'email', 'price', 'paid', 
-            'amount', 'currency', 'deeplink', 'payler_url', 'travelers', 
-            'nights', 'flydate', 'placement', 'adults', 'child', 'mealcode', 
-            'mealrussian', 'meal'
+            "id",
+            "hotelid",
+            "first_name",
+            "phone",
+            "email",
+            "price",
+            "paid",
+            "amount",
+            "currency",
+            "deeplink",
+            "payler_url",
+            "travelers",
+            "nights",
+            "flydate",
+            "placement",
+            "adults",
+            "child",
+            "mealcode",
+            "mealrussian",
+            "meal",
         ]
 
     def get_deeplink(self, obj):
-        if self.context.get("type") == "detail": 
+        if self.context.get("type") == "detail":
             try:
-                transaction = Transaction.objects.get(hotel_id=self.context.get('id'))
+                transaction = Transaction.objects.get(hotel_id=self.context.get("id"))
                 return f"https://app.mbank.kg/deeplink?service=67ec3602-7c44-415c-a2cd-08d3376216f5&PARAM1={transaction.rid}&amount={transaction.amount}"
             except Transaction.DoesNotExist:
                 pass
         return None
 
-    def get_amount(self, obj): 
+    def get_amount(self, obj):
         return obj.price
-    
-    def get_payler_url(self, obj): 
+
+    def get_payler_url(self, obj):
         return obj.payler_url
 
     def create(self, validated_data):
         try:
             travelers_list = validated_data.pop("travelers", [])
-            with open('hotel_travelers.txt', 'a') as file:
+            with open("hotel_travelers.txt", "a") as file:
                 file.write(f"{validated_data},\n\n\n")
             instance = RequestHotel.objects.create(**validated_data)
             for traveler in travelers_list:
                 instance.travelers.create(**traveler)
-            
+
             return instance
         except KeyError:
             return super().create(validated_data)
 
-
-
-    
 
 class ManualRequestsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ManualRequests
         fields = "__all__"
 
-    
     def to_representation(self, instance):
         url = f"https://api.u-on.ru/{settings.KEY}/request/{instance.request_id}.json"
-        response = requests.get(url)
-        
-        if response.status_code != 200:
-            return {}
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                api_data = response.json().get("request", {})
+                if isinstance(api_data, dict):  
+                    instance.data = api_data
+                elif isinstance(api_data, list) and api_data:  
+                    instance.data = api_data[0]
+                instance.save()  
+        except requests.RequestException:
+            pass  
 
-        data = response.json().get("request", [])
-
-        if not data or (isinstance(data, list) and len(data) == 0):
-            return {}
-        
-        instance.data = data[0]
         return super().to_representation(instance)
-    
+
+
+
 
 class ExtendedFieldSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=True)
@@ -449,7 +468,5 @@ class ExtendedFieldSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=True)
     type = serializers.IntegerField(required=False, default=1)
     options = serializers.ListField(
-        child=serializers.CharField(max_length=255), 
-        required=False, 
-        allow_empty=True
+        child=serializers.CharField(max_length=255), required=False, allow_empty=True
     )

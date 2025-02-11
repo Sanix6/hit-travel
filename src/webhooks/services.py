@@ -11,16 +11,17 @@ from src.helpers.send_sms import send_sms
 def generate_password():
     chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     from os import urandom
+
     return "".join(chars[c % len(chars)] for c in urandom(8))
+
 
 def send_email(data):
     email = EmailMessage(
-        subject=data['email_subject'],
-        body=data['email_body'],
-        to=[data['to_email']]
+        subject=data["email_subject"], body=data["email_body"], to=[data["to_email"]]
     )
     email.content_subtype = "html"
     email.send()
+
 
 KEY = settings.KEY
 
@@ -35,7 +36,10 @@ def add_request(request_id):
 
     if res.status_code != 200:
         print(f"Ответ запроса != 200: {res.status_code}")
-        return {"response": False, "message": f"Ответ запроса != 200 ({res.status_code})"}
+        return {
+            "response": False,
+            "message": f"Ответ запроса != 200 ({res.status_code})",
+        }
 
     data = res.json().get("request", [])
     if not data:
@@ -43,7 +47,7 @@ def add_request(request_id):
         return {"response": False, "message": "Данные запроса пусты"}
 
     data = data[0]
-    '''Процесс с юзеркой'''
+    """Процесс с юзеркой"""
 
     user = None
     client_email = data.get("client_email")
@@ -85,7 +89,10 @@ def add_request(request_id):
 
         else:
             print("Не указан email клиента и недопустимый номер телефона")
-            return {"response": False, "message": "Не указан email клиента и недопустимый номер телефона"}
+            return {
+                "response": False,
+                "message": "Не указан email клиента и недопустимый номер телефона",
+            }
 
     # If user was found or successfully created, check existing request
     ManualRequests.objects.create(user=user, request_id=request_id)
@@ -120,7 +127,7 @@ def add_request(request_id):
     #     for i in data["tourists"]:
     #         birthday_str = i["u_birthday"]
     #         date_of_birth = datetime.strptime(birthday_str, "%Y-%m-%d %H:%M")
-            
+
     #         tourist = Traveler.objects.create(
     #             first_name=i["u_name"],
     #             last_name=i["u_surname"],

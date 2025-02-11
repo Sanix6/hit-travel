@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import CreateRequest, CreateClient
+from .models import CreateClient, CreateRequest
 
 
 class CreateRequestSerializer(serializers.ModelSerializer):

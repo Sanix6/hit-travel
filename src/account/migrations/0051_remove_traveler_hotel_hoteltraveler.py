@@ -7,28 +7,76 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0050_alter_traveler_main'),
+        ("account", "0050_alter_traveler_main"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='traveler',
-            name='hotel',
+            model_name="traveler",
+            name="hotel",
         ),
         migrations.CreateModel(
-            name='HotelTraveler',
+            name="HotelTraveler",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('dateofborn', models.DateField(blank=True, null=True, verbose_name='Дата рождения')),
-                ('first_name', models.CharField(max_length=100, verbose_name='Имя по загранпаспорту')),
-                ('last_name', models.CharField(max_length=100, verbose_name='Фамилия по загранпаспорту')),
-                ('passport_id', models.CharField(blank=True, max_length=255, null=True, verbose_name='Серия и номер з/п')),
-                ('issued_by', models.CharField(blank=True, max_length=100, null=True, verbose_name='Орган, выдачи з/п')),
-                ('hotel', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='hotel_travelers', to='account.requesthotel')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "dateofborn",
+                    models.DateField(
+                        blank=True, null=True, verbose_name="Дата рождения"
+                    ),
+                ),
+                (
+                    "first_name",
+                    models.CharField(
+                        max_length=100, verbose_name="Имя по загранпаспорту"
+                    ),
+                ),
+                (
+                    "last_name",
+                    models.CharField(
+                        max_length=100, verbose_name="Фамилия по загранпаспорту"
+                    ),
+                ),
+                (
+                    "passport_id",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        verbose_name="Серия и номер з/п",
+                    ),
+                ),
+                (
+                    "issued_by",
+                    models.CharField(
+                        blank=True,
+                        max_length=100,
+                        null=True,
+                        verbose_name="Орган, выдачи з/п",
+                    ),
+                ),
+                (
+                    "hotel",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="hotel_travelers",
+                        to="account.requesthotel",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Путешественник',
-                'verbose_name_plural': 'Путешественники',
+                "verbose_name": "Путешественник",
+                "verbose_name_plural": "Путешественники",
             },
         ),
     ]

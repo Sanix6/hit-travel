@@ -22,6 +22,10 @@ redis_client = redis.StrictRedis(host="localhost", port=6379, db=1)
 
 app.conf.broker_connection_retry_on_startup = True
 
+app.conf.update(
+    worker_class='gevent',
+    worker_pool_restarts=True
+)
 
 @app.task()
 def get_token():

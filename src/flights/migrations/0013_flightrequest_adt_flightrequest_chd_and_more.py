@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('flights', '0012_flightrequest_flight_number'),
+        ("flights", "0012_flightrequest_flight_number"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='flightrequest',
-            name='adt',
+            model_name="flightrequest",
+            name="adt",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='flightrequest',
-            name='chd',
+            model_name="flightrequest",
+            name="chd",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='flightrequest',
-            name='inf',
+            model_name="flightrequest",
+            name="inf",
             field=models.IntegerField(blank=True, null=True),
         ),
     ]

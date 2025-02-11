@@ -6,21 +6,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bus_tours', '0002_bustours_alter_meals_options_tourprogram_and_more'),
+        ("bus_tours", "0002_bustours_alter_meals_options_tourprogram_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='bustours',
-            options={'verbose_name': 'Автобусный тур', 'verbose_name_plural': 'Автобусные туры    '},
+            name="bustours",
+            options={
+                "verbose_name": "Автобусный тур",
+                "verbose_name_plural": "Автобусные туры    ",
+            },
         ),
         migrations.AlterModelOptions(
-            name='gallery',
-            options={'verbose_name': 'Галерея', 'verbose_name_plural': 'Галерея'},
+            name="gallery",
+            options={"verbose_name": "Галерея", "verbose_name_plural": "Галерея"},
         ),
         migrations.AlterField(
-            model_name='bustours',
-            name='description_pdf',
-            field=models.FileField(upload_to='descriptions', verbose_name='Описание тура PDF'),
+            model_name="bustours",
+            name="description_pdf",
+            field=models.FileField(
+                upload_to="descriptions", verbose_name="Описание тура PDF"
+            ),
         ),
     ]

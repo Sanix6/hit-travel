@@ -7,15 +7,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('flights', '0002_airproviders'),
+        ("flights", "0002_airproviders"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='AviaAgreement',
+            name="AviaAgreement",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('agreement', ckeditor.fields.RichTextField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("agreement", ckeditor.fields.RichTextField()),
             ],
         ),
     ]

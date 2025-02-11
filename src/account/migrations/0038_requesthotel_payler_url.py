@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0037_requesttour_payler_url'),
+        ("account", "0037_requesttour_payler_url"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='requesthotel',
-            name='payler_url',
+            model_name="requesthotel",
+            name="payler_url",
             field=models.CharField(max_length=700, null=True),
         ),
     ]

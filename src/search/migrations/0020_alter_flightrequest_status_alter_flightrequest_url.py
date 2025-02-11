@@ -6,18 +6,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0019_alter_passengers_main_alter_segments_main'),
+        ("search", "0019_alter_passengers_main_alter_segments_main"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='flightrequest',
-            name='status',
-            field=models.CharField(choices=[('Ожидает оплаты', 'Ожидает оплаты'), ('Подтверждено', 'Подтверждено')], default='0', max_length=255, verbose_name='Статус'),
+            model_name="flightrequest",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("Ожидает оплаты", "Ожидает оплаты"),
+                    ("Подтверждено", "Подтверждено"),
+                ],
+                default="0",
+                max_length=255,
+                verbose_name="Статус",
+            ),
         ),
         migrations.AlterField(
-            model_name='flightrequest',
-            name='url',
+            model_name="flightrequest",
+            name="url",
             field=models.TextField(),
         ),
     ]

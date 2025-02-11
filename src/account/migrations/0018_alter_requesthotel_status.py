@@ -6,13 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('account', '0017_requesthotel_status'),
+        ("account", "0017_requesthotel_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='requesthotel',
-            name='status',
-            field=models.IntegerField(choices=[(1, 'Новая заявка'), (2, 'В процессе'), (3, 'Арендован'), (4, 'Отклонено')], default=2, verbose_name='Статус'),
+            model_name="requesthotel",
+            name="status",
+            field=models.IntegerField(
+                choices=[
+                    (1, "Новая заявка"),
+                    (2, "В процессе"),
+                    (3, "Арендован"),
+                    (4, "Отклонено"),
+                ],
+                default=2,
+                verbose_name="Статус",
+            ),
         ),
     ]

@@ -7,39 +7,103 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('search', '0003_alter_countries_name'),
+        ("search", "0003_alter_countries_name"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='countries',
-            name='code_name',
-            field=models.CharField(blank=True, help_text='KGZ', max_length=3, null=True, verbose_name='Код страны'),
+            model_name="countries",
+            name="code_name",
+            field=models.CharField(
+                blank=True,
+                help_text="KGZ",
+                max_length=3,
+                null=True,
+                verbose_name="Код страны",
+            ),
         ),
         migrations.CreateModel(
-            name='Cities',
+            name="Cities",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(editable=False, max_length=200, verbose_name='Город')),
-                ('code_name', models.CharField(blank=True, help_text='FRU', max_length=3, null=True, verbose_name='Код города')),
-                ('main', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cities', to='search.countries')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        editable=False, max_length=200, verbose_name="Город"
+                    ),
+                ),
+                (
+                    "code_name",
+                    models.CharField(
+                        blank=True,
+                        help_text="FRU",
+                        max_length=3,
+                        null=True,
+                        verbose_name="Код города",
+                    ),
+                ),
+                (
+                    "main",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="cities",
+                        to="search.countries",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Город',
-                'verbose_name_plural': 'Города',
+                "verbose_name": "Город",
+                "verbose_name_plural": "Города",
             },
         ),
         migrations.CreateModel(
-            name='Airports',
+            name="Airports",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(editable=False, max_length=200, verbose_name='Страна')),
-                ('code_name', models.CharField(blank=True, help_text='FRU', max_length=3, null=True, verbose_name='Код аэропорта')),
-                ('main', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='airports', to='search.cities')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        editable=False, max_length=200, verbose_name="Страна"
+                    ),
+                ),
+                (
+                    "code_name",
+                    models.CharField(
+                        blank=True,
+                        help_text="FRU",
+                        max_length=3,
+                        null=True,
+                        verbose_name="Код аэропорта",
+                    ),
+                ),
+                (
+                    "main",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="airports",
+                        to="search.cities",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Аэропорт',
-                'verbose_name_plural': 'Аэропорты',
+                "verbose_name": "Аэропорт",
+                "verbose_name_plural": "Аэропорты",
             },
         ),
     ]

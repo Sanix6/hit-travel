@@ -59,26 +59,26 @@ def get_user_by_phone(phone):
     return None
 
 
-# def bonus_card_create(user):
-#     """Creates and activates a bonus card for a user."""
-#     data_1 = {
-#         "number": f"{user.bcard_number}000",
-#         "user_id": int(user.tourist_id),
-#     }
+def bonus_card_create(user):
+    """Creates and activates a bonus card for a user."""
+    data_1 = {
+        "number": f"{user.bcard_number}000",
+        "user_id": int(user.tourist_id),
+    }
 
-#     url_1 = f"https://api.u-on.ru/{KEY}/bcard/create.json"
-#     res_1 = requests.post(url_1, json=data_1)
-#     res_1.raise_for_status()
+    url_1 = f"https://api.u-on.ru/{KEY}/bcard/create.json"
+    res_1 = requests.post(url_1, json=data_1)
+    res_1.raise_for_status()
 
-#     bcard_id = res_1.json().get("id")
-#     user.bcard_id = bcard_id
-#     user.save()
+    bcard_id = res_1.json().get("id")
+    user.bcard_id = bcard_id
+    user.save()
 
-#     data_2 = {"bc_number": f"{user.bcard_number}000", "user_id": int(user.tourist_id)}
-#     url_2 = f"https://api.u-on.ru/{KEY}/bcard-activate/create.json"
-#     requests.post(url_2, json=data_2).raise_for_status()
-#     logging.info("Bonus card created and activated successfully.")
-#     return True
+    data_2 = {"bc_number": f"{user.bcard_number}000", "user_id": int(user.tourist_id)}
+    url_2 = f"https://api.u-on.ru/{KEY}/bcard-activate/create.json"
+    requests.post(url_2, json=data_2).raise_for_status()
+    logging.info("Bonus card created and activated successfully.")
+    return True
 
 
 def create_dogovor(instance):
@@ -390,7 +390,7 @@ def send_password_to_user(instance, password):
         "to_email": instance.email,
     }
 
-    # Util.send_email(email_data)
+    Util.send_email(email_data)
 
 
 def add_tourist_on_user_creation(sender, instance):

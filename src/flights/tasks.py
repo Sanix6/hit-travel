@@ -9,15 +9,13 @@ from urllib.parse import urlencode
 import aiohttp
 import asyncio
 
-
-from config.celery import app
 from src.payment.models import Transaction
+from src.flights.models import FlightRequest
 
-from .models import FlightRequest
-
-
-@app.task(name="src.search.avia_tasks.timeout")
+@shared_task(name="src.flights.tasks.timeout")
 def timeout():
+    from src.payment.models import Transaction  
+
     timeout_threshold = timezone.now() - timedelta(minutes=25)
 
     flight_requests = FlightRequest.objects.filter(
@@ -29,6 +27,7 @@ def timeout():
     Transaction.objects.filter(request_id__in=request_ids).update(status="timeout")
 
     flight_requests.update(status="timeout")
+
 
 
 @shared_task()

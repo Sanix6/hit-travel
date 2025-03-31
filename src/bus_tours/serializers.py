@@ -33,6 +33,7 @@ class BusTourListSerializer(serializers.ModelSerializer):
     img = serializers.SerializerMethodField()
     total_reviews = serializers.SerializerMethodField()
     reviews = TourReviewsSerializer(many=True)
+    nights = serializers.SerializerMethodField()
 
     class Meta:
         model = BusTours
@@ -61,6 +62,12 @@ class BusTourListSerializer(serializers.ModelSerializer):
 
     def get_total_reviews(self, obj):
         return obj.reviews.count()
+
+    def get_nights(self, obj):
+        days = obj.days
+        return days - 1 if days > 0 else 0 
+
+    
 
 
 class TourProgramsSerializer(serializers.ModelSerializer):
@@ -125,7 +132,6 @@ class BusTourDetailSerializer(serializers.ModelSerializer):
             "seats",
             "datefrom",
             "dateto",
-            "nights",
             "days",
             "meal",
             "meal_fullname",
@@ -233,7 +239,7 @@ class MyBusToursSerializer(serializers.ModelSerializer):
     seats = serializers.ReadOnlyField(source="tour.seats")
     datefrom = serializers.ReadOnlyField(source="tour.datefrom")
     dateto = serializers.ReadOnlyField(source="tour.dateto")
-    nights = serializers.ReadOnlyField(source="tour.nights")
+    nights = serializers.SerializerMethodField()
     days = serializers.ReadOnlyField(source="tour.days")
     meal = serializers.ReadOnlyField(source="tour.meal.name")
     price = serializers.ReadOnlyField(source="tour.price")
@@ -260,6 +266,11 @@ class MyBusToursSerializer(serializers.ModelSerializer):
 
     def get_id(self, obj):
         return obj.tour.id
+
+
+    def get_nights(self, obj):
+        days = obj.tour.days
+        return days - 1 if days > 0 else 0 
 
     def get_img(self, obj):
         images = obj.tour.gallery.all()

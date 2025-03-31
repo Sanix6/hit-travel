@@ -4,6 +4,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
+from config.celery import get_token
 
 import redis
 import requests
@@ -36,8 +37,9 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 
 avia_center_url = settings.AVIA_URL
-pool = ConnectionPool(host='localhost', port=6379, db=1)
+pool = ConnectionPool(host='localhost', port=6379, db=0)
 redis_client = redis.StrictRedis(connection_pool=pool)
+
 
 class SearchParamsViewV3(APIView):
     def get(self, request):
@@ -55,7 +57,7 @@ class SearchParamsViewV3(APIView):
 class SearchParamsView(APIView):
     def get(self, request, *args, **kwargs):
         try:
-            redis_client = redis.StrictRedis(host="localhost", port=6379, db=1)
+            redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
             token = redis_client.get("token").decode("utf-8")
         except Exception as e:
             return Response(
@@ -74,9 +76,10 @@ class SearchParamsView(APIView):
 class FlightsSearchView(APIView):
     def get(self, request):
         try:
-            token = get_redis_token()
-        except ConnectionError as e:
-            return Response({"message": str(e)}, status=500)
+            redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+            token = redis_client.get('token').decode("utf-8")
+        except Exception as e:
+            return Response({"message": "Failed to connect to Redis or retrieve token"}, status=500)
 
         avia_center_url = settings.AVIA_URL
         encoded_params = urlencode(request.query_params, safe='[]')
@@ -107,10 +110,9 @@ class FlightsSearchView(APIView):
         return Response(response_data)
 
 
-
 class FlightDetailView(APIView):
     def get(self, request, *args, **kwargs):
-        redis_client = redis.StrictRedis(host="localhost", port=6379, db=1)
+        redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
         token = redis_client.get("token").decode("utf-8")
         url = f"{avia_center_url}/avia/flight-info?auth_key={token}"
         url += f"&tid={self.kwargs['tid']}"
@@ -124,7 +126,7 @@ class FlightRulesView(APIView):
     """Agreement"""
 
     def get(self, request, *args, **kwargs):
-        redis_client = redis.StrictRedis(host="localhost", port=6379, db=1)
+        redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
         token = redis_client.get("token").decode("utf-8")
         url = f"{avia_center_url}/avia/rules?auth_key={token}"
         url += f"&tid={self.kwargs['tid']}"
@@ -138,7 +140,7 @@ class BookingView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        redis_client = redis.StrictRedis(host="localhost", port=6379, db=1)
+        redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
         token = redis_client.get("token").decode("utf-8")
         parameters = request.query_params
 
@@ -311,7 +313,7 @@ class BookingInfoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        redis_client = redis.StrictRedis(host="localhost", port=6379, db=1)
+        redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
         token = redis_client.get("token").decode("utf-8")
         billing_number = self.kwargs.get("billing_number")
         url = f"{avia_center_url}/avia/book-info?auth_key={token}&lang=ru&billing_number={billing_number}"
@@ -351,7 +353,7 @@ class RefundAmountsView(RetrieveAPIView):
 
         if serializer.is_valid():
             billing_number = serializer.validated_data.get("billing_number")
-            redis_client = redis.StrictRedis(host="localhost", port=6379, db=1)
+            redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
             token = redis_client.get("token")
             token = token.decode("utf-8") if isinstance(token, bytes) else token
 
@@ -388,7 +390,7 @@ class CancelBookingView(GenericAPIView):
         if serializer.is_valid():
             booking_id = serializer.validated_data.get("booking_id")
             billing_number = serializer.validated_data.get("billing_number")
-            redis_client = redis.StrictRedis(host="localhost", port=6379, db=1)
+            redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
             token = redis_client.get("token")
             token = token.decode("utf-8") if isinstance(token, bytes) else token
 
@@ -429,3 +431,12 @@ class CancelBookingView(GenericAPIView):
             except requests.exceptions.RequestException as e:
                 return Response({"error": str(e)}, status=500)
         return Response(serializer.errors, status=400)
+
+
+class Token(APIView):
+    def get(self, request):
+        try:
+            token = get_redis_token()
+            print(f"Полученный токен: {token}")  # <-- Добавь это
+        except ConnectionError as e:
+            return Response({"message": str(e)}, status=500)

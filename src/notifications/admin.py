@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from src.notification.models import CustomNotification, TokenFCM, UserToken
+from src.notifications.models import CustomNotification, TokenFCM, UserToken
 
 
 @admin.register(CustomNotification)

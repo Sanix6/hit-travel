@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     "src.main",
     "src.bus_tours",
     "src.webhooks",
-    "src.notification",
+    "src.notifications",
     "src.payment",
     "src.flights",
 ]
@@ -102,14 +102,6 @@ DATABASES = {
 }
 
 
-#SENTRY SETTINGS
-sentry_sdk.init(
-    dsn="https://e85695ad2565ac8aa3be6b4d61c04053@o4508601376833536.ingest.de.sentry.io/4508623883993168",
-    traces_sample_rate=1.0,
-    _experiments={
-        "continuous_profiling_auto_start": True,
-    },
-)
 # AUTH_PASSWORD_VALIDATORS = [
 #     {
 #         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",

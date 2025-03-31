@@ -53,6 +53,7 @@ class CustomUserAdmin(UserAdmin):
                     "city",
                     "passport_front",
                     "passport_back",
+                    "bcard_number"
                 )
             },
         ),

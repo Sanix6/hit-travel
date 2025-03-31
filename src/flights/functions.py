@@ -10,8 +10,8 @@ from .models import AirProviders
 
 def get_redis_token(redis_host="localhost", redis_port=6379, redis_db=1):
     try:
-        redis_client = redis.StrictRedis(host=redis_host, port=redis_port, db=redis_db)
-        return redis_client.get("token").decode("utf-8")
+        redis_client = redis.StrictRedis(host=redis_host, port=6379, db=redis_db)
+        return redis_client.get("token")
     except Exception as e:
         raise ConnectionError("Failed to connect to Redis or retrieve token") from e
 
@@ -30,7 +30,7 @@ def filter_flights(flights, is_refund_filter, is_baggage_filter):
         if not title or not code:
             continue  
 
-        air_provider = AirProviders.objects.filter(title=title, code=code).only("img").first()
+        air_provider = AirProviders.objects.filter(code=code).only("img").first()
 
         supplier["logo"] = f"https://hit-travel.org/{air_provider.img.url}" if air_provider and air_provider.img else None
         filtered_flights.append(flight)

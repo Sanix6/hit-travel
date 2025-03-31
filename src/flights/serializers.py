@@ -2,9 +2,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 from rest_framework import serializers
-
 from src.payment.models import Transaction
-
 from .models import FlightRequest, Passengers, Segments
 
 

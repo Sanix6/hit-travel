@@ -56,17 +56,9 @@ class ReviewsInline(admin.StackedInline):
 
 @admin.register(BusTours)
 class BusToursAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "title",
-        "nights",
-        "price",
-        "seats",
-    )
-    list_display_links = (
-        "id",
-        "title",
-    )
+    list_display = ("id","title","price","seats", "datefrom", "dateto",)
+    list_editable = ("datefrom", "dateto") 
+    list_display_links = ("id","title",)
     list_filter = ("meal",)
     search_fields = ("title", "description")
     inlines = (

@@ -38,7 +38,7 @@ class User(AbstractUser):
     )
     username = None
     # balance = models.DecimalField(_("Balance"), default=0, max_digits=10, decimal_places=2)
-    # bonuses = models.DecimalField(_("Bonuses"), default=0, max_digits=10, decimal_places=2)
+    bonuses = models.DecimalField(_("Bonuses"), default=0, max_digits=10, decimal_places=2)
     email = models.EmailField(_("Email"), unique=True)
     first_name = models.CharField(_("first name"), max_length=150)
     last_name = models.CharField(_("last name"), max_length=150)

@@ -13,6 +13,7 @@ from src.flights.views import (
     RefundAmountsView,
     SearchParamsView,
     SearchParamsViewV3,
+    Token
 )
 
 urlpatterns = [
@@ -36,4 +37,5 @@ urlpatterns = [
     path("avia/booking-cancel/", CancelBookingView.as_view(), name="booking-cancel"),
     path("avia/get-token/", GetTokenView.as_view(), name="get_token"),
     path("avia/refund-amounts/", RefundAmountsView.as_view(), name="refund-amounts"),
+    path('toke', Token.as_view())
 ]

@@ -225,7 +225,7 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
     def get_photo(self, obj):
         if obj.photo:
             request = self.context.get("request")
-            photo_url = obj.photo.url
+            photo_url = obj.photo.url.lstrip("/")  
             return f"https://hit-travel.org/{photo_url}"
         return None
 

@@ -47,7 +47,6 @@ def add_request(request_id):
         return {"response": False, "message": "Данные запроса пусты"}
 
     data = data[0]
-    """Процесс с юзеркой"""
 
     user = None
     client_email = data.get("client_email")
@@ -55,37 +54,33 @@ def add_request(request_id):
     client_phone = "".join(filter(str.isdigit, client_phone))
     if client_email:
         try:
-            user = User.objects.get(email=client_email)
+            user = User.objects.get(phone=client_phone)
         except ObjectDoesNotExist:
             pass
 
-    if user is None:
-        if client_phone and client_phone.startswith("996") and len(client_phone) == 12:
+        if user is None:
             generated_email = f"{client_phone}@hittravel.com"
             password = generate_password()
-            try:
-                user = User.objects.get(email=generated_email)
-            except ObjectDoesNotExist:
-                user = User.objects.create(
-                    email=generated_email,
-                    password=password,
-                    first_name=data["client_name"],
-                    last_name=data["client_sname"],
-                    is_verified=True,
-                    phone=client_phone,
-                    gender="н",
-                )
-                user.set_password(password)
-                user.save()
+            user = User.objects.create(
+                email=generated_email,
+                password=password,
+                first_name=data["client_name"],
+                last_name=data["client_sname"],
+                is_verified=True,
+                phone=client_phone,  
+                gender="н",
+            )
+            user.set_password(password)
+            user.save()
 
-                sms_text = (
-                    f"Ваш аккаунт был автоматически создан. "
-                    f"Логин: {generated_email}, Пароль: {password}"
-                )
-                try:
-                    send_sms(client_phone, sms_text)
-                except Exception as e:
-                    print(f"Error sending SMS: {e}")
+            sms_text = (
+                f"Ваш аккаунт был автоматически создан. "
+                f"Логин: {generated_email}, Пароль: {password}"
+            )
+            try:
+                send_sms(client_phone, sms_text)
+            except Exception as e:
+                print(f"Error sending SMS: {e}")
 
         else:
             print("Не указан email клиента и недопустимый номер телефона")

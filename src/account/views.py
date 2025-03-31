@@ -202,7 +202,6 @@ class LoginAPIView(views.APIView):
                     "response": False,
                     "message": "Пользователь с указанными учетными данными не существует",
                 },
-                status=status.HTTP_404_NOT_FOUND,
             )
 
         user = authenticate(request, email=email, password=password)

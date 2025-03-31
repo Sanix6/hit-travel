@@ -1,8 +1,12 @@
 import uuid
+import logging
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from .tasks import send_notification
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
+logger = logging.getLogger(__name__)
 
 class CustomNotification(models.Model):
     text = models.TextField(_("Текст"), max_length=400)
@@ -18,28 +22,30 @@ class CustomNotification(models.Model):
         verbose_name = _("Создать уведомление")
         verbose_name_plural = _("Создать уведомление")
 
-    def save(self, *args, **kwargs):
-        if not self.sent:
-            super().save(*args, **kwargs)
-            if self.all_users:
-                users = UserToken.objects.all()
-            else:
-                users = self.selected_users.all()
-            user_tokens = [user.token for user in users]
-            text = self.text
-            send_notification.delay(text, user_tokens)
-            print("Notification sent")
-            self.sent = True
-
-            super().save(*args, **kwargs)
-
     def __str__(self):
         return self.text
 
 
+@receiver(post_save, sender=CustomNotification)
+def send_push_notification(sender, instance, created, **kwargs):
+    if created and not instance.sent:
+        if instance.all_users:
+            users = UserToken.objects.filter(is_active=True)
+        else:
+            users = instance.selected_users.filter(is_active=True)
+
+        user_tokens = list(users.values_list("token__token", flat=True))
+
+        if user_tokens:
+            send_notification.delay(instance.text, user_tokens)
+            logger.info("Notification sent to %d users", len(user_tokens))
+
+        instance.__class__.objects.filter(id=instance.id).update(sent=True)
+
+
 class BaseModel(models.Model):
     id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, max_length=36
+        primary_key=True, default=uuid.uuid4, editable=False
     )
 
     class Meta:
@@ -71,9 +77,7 @@ class UserToken(BaseModel):
     token = models.ForeignKey(
         to=TokenFCM, on_delete=models.CASCADE, related_name="users"
     )
-    is_active = models.BooleanField(
-        default=True,
-    )
+    is_active = models.BooleanField(default=True)
     updated_at = models.DateTimeField(
         auto_now=True, blank=True, null=True, verbose_name=_("Дата изменения")
     )

@@ -2,6 +2,11 @@ from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.contrib.postgres.fields import ArrayField
+from src.helpers.choices import CURRENCY_CHOICES
+from django.db import transaction
+
+
 
 
 class Meals(models.Model):
@@ -48,19 +53,74 @@ class BusTours(models.Model):
     seats = models.IntegerField(_("Доступно мест"))
     datefrom = models.DateField(_("Начало тура"))
     dateto = models.DateField(_("Окончание тура"))
-    nights = models.IntegerField(_("Ночей"))
     days = models.IntegerField(_("Дней"))
     meal = models.ForeignKey(
         Meals, verbose_name=_("Питание"), on_delete=models.SET_DEFAULT, default=1
     )
+    currency = models.CharField(_('Валюта'), max_length=50, choices=CURRENCY_CHOICES, default='KGZ')
     price = models.IntegerField(_("Цена"))
     description = RichTextField(_("Описание"))
     description_pdf = models.FileField(
         _("Описание тура PDF"), upload_to="descriptions", null=True, blank=True
     )
+    records = models.IntegerField(_("Количество записей"), null=True, blank=True)
+
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None 
+        super().save(*args, **kwargs)  
+        
+        if is_new and self.records and self.records > 1:
+            copies = []
+            for _ in range(self.records - 1):
+                copy_obj = BusTours.objects.create(
+                    cat=self.cat,
+                    title=self.title,
+                    country=self.country,
+                    departure=self.departure,
+                    num_of_tourists=self.num_of_tourists,
+                    seats=self.seats,
+                    datefrom=self.datefrom,
+                    dateto=self.dateto,
+                    days=self.days,
+                    meal=self.meal,
+                    currency=self.currency,
+                    price=self.price,
+                    description=self.description,
+                    description_pdf=self.description_pdf,
+                    records=1  
+                )
+                copies.append(copy_obj)
+
+            for copy_obj in copies:
+                self._copy_related_objects(copy_obj)
+
+
+    def _copy_related_objects(self, new_tour):
+        """Копирует связанные модели для нового объекта BusTours"""
+        related_models = {
+            "programs": TourProgram,
+            "conditions": TourCondition,
+            "excursions": TourExcursions,
+            "cities": Cities,
+            "gallery": Gallery,
+        }
+
+        for related_name, model in related_models.items():
+            related_objects = getattr(self, related_name).all()
+            new_objects = [
+                model(
+                    **{field.name: getattr(obj, field.name) for field in model._meta.fields if field.name != "id"},
+                    tour=new_tour
+                )
+                for obj in related_objects
+            ]
+            model.objects.bulk_create(new_objects) 
+
+
 
     def __str__(self) -> str:
-        return f"{self.title} {self.nights} ночей"
+        return f"{self.title} {self.days} дней"
 
     class Meta:
         verbose_name = _("Авторский тур")

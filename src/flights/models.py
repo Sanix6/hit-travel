@@ -81,6 +81,7 @@ class FlightRequest(models.Model):
     adt = models.IntegerField(null=True, blank=True)
     chd = models.IntegerField(null=True, blank=True)
     inf = models.IntegerField(null=True, blank=True)
+    tid = models.TextField(max_length=255, null=True, blank=True)
 
     class Meta:
         verbose_name = "Заявки на авиабилеты"

@@ -2,6 +2,10 @@ import requests
 from django.conf import settings
 from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
+import json
+import traceback 
+import logging
+
 
 from src.main.models import Currency
 from src.payment.models import Transaction
@@ -13,8 +17,7 @@ from .serializers import (
     RequestHotelSerializer,
     TourRequestSerializer,
 )
-from .services import create_lead
-
+from .services import create_lead, hotel_request_exists
 
 class TourRequestView(generics.CreateAPIView):
     serializer_class = TourRequestSerializer
@@ -26,7 +29,7 @@ class TourRequestView(generics.CreateAPIView):
         user = request.user
 
         if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         tour_id = serializer.validated_data.get("tourid")
         if tour_request_exists(tour_id, user):
@@ -73,7 +76,6 @@ class TourRequestView(generics.CreateAPIView):
             }
         )
 
-
 class RequestHotelView(views.APIView):
     authlogin = settings.AUTHLOGIN
     authpass = settings.AUTHPASS
@@ -81,64 +83,74 @@ class RequestHotelView(views.APIView):
 
     def post(self, request, format=None):
         serializer = RequestHotelSerializer(data=request.data)
-        if serializer.is_valid():
-            price_netto = serializer.validated_data["price"]
-            price = price_netto * float(Currency.objects.first().sell)
+        user = request.user
 
-            nights = serializer.validated_data.get("nights")
-            flydate = serializer.validated_data.get("flydate")
-            placement = serializer.validated_data.get("placement")
-            adults = serializer.validated_data.get("adults", 0)
-            child = serializer.validated_data.get("child", 0)
-            mealcode = serializer.validated_data.get("mealcode")
-            mealrussian = serializer.validated_data.get("mealrussian")
-            meal = serializer.validated_data.get("meal")
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            instance = serializer.save(
-                user=request.user,
-                price=price,
-                price_netto=price_netto,
-                nights=nights,
-                flydate=flydate,
-                placement=placement,
-                adults=adults,
-                child=child,
-                mealcode=mealcode,
-                mealrussian=mealrussian,
-                meal=meal,
-            )
 
-            hotel_lead(serializer.data, request.user)
-
-            transaction = Transaction.objects.create(
-                status="processing",
-                name="hotel",
-                hotel_id=instance.id,
-                user=request.user,
-                amount=price,
-                rid=Transaction.generate_unique_code(),
-            )
-
-            instance.payler_url = (
-                f"https://sandbox.payler.com/gapi/Pay?session_id={transaction.id}"
-            )
-            instance.transaction_id = transaction.id
-            instance.save()
-
-            deeplink = f"https://app.mbank.kg/deeplink?service=67ec3602-7c44-415c-a2cd-08d3376216f5&PARAM1={transaction.rid}&amount={int(price)}"
-
+        hotel_id = serializer.validated_data.get("hotelid")
+        if hotel_request_exists(hotel_id, user):
             return Response(
-                {
-                    "response": True,
-                    "deeplink": deeplink,
-                    "amount": transaction.amount,
-                    "data": RequestHotelSerializer(instance).data,
-                    "transaction_id": transaction.id,
-                },
-                status=status.HTTP_201_CREATED,
+                {"response": False, "message": "Заявка на этот отель уже существует"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        price_netto = serializer.validated_data["price"]
+        price = price_netto * float(Currency.objects.first().sell)
+
+        nights = serializer.validated_data.get("nights")
+        flydate = serializer.validated_data.get("flydate")
+        placement = serializer.validated_data.get("placement")
+        adults = serializer.validated_data.get("adults", 0)
+        child = serializer.validated_data.get("child", 0)
+        mealcode = serializer.validated_data.get("mealcode")
+        mealrussian = serializer.validated_data.get("mealrussian")
+        meal = serializer.validated_data.get("meal")
+
+        instance = serializer.save(
+            user=user,
+            price=price,
+            price_netto=price_netto,
+            nights=nights,
+            flydate=flydate,
+            placement=placement,
+            adults=adults,
+            child=child,
+            mealcode=mealcode,
+            mealrussian=mealrussian,
+            meal=meal,
+        )
+
+        hotel_lead(serializer.data, user)
+
+        transaction = Transaction.objects.create(
+            status="processing",
+            name="hotel",
+            hotel_id=instance.id,
+            user=user,
+            amount=price,
+            rid=Transaction.generate_unique_code(),
+        )
+
+        instance.payler_url = (
+            f"https://sandbox.payler.com/gapi/Pay?session_id={transaction.id}"
+        )
+        instance.transaction_id = transaction.id
+        instance.save()
+
+        deeplink = f"https://app.mbank.kg/deeplink?service=67ec3602-7c44-415c-a2cd-08d3376216f5&PARAM1={transaction.rid}&amount={int(price)}"
+
+        return Response(
+            {
+                "response": True,
+                "deeplink": deeplink,
+                "amount": transaction.amount,
+                "data": RequestHotelSerializer(instance).data,
+                "transaction_id": transaction.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
     def get(self, request, format=None):
         user_requests = RequestHotel.objects.filter(user=request.user).order_by("-id")

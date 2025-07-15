@@ -58,3 +58,22 @@ def fetch_result_data(authlogin, authpass, requestid, page):
         return response.json()
     except requests.exceptions.RequestException as e:
         return {"error": f"Failed to fetch result data: {str(e)}"}
+
+
+def filter_only_charters(data):
+    filtered_hotels = []
+
+    for hotel in data.get("data", {}).get("result", {}).get("hotel", []):
+        tours = hotel.get("tours", {}).get("tour", [])
+
+        charter_tours = [
+            tour for tour in tours
+            if tour.get("regular") in (None, 0)  
+        ]
+
+        if charter_tours:
+            hotel["tours"]["tour"] = charter_tours
+            filtered_hotels.append(hotel)
+
+    data["data"]["result"]["hotel"] = filtered_hotels
+    return data

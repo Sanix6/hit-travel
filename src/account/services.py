@@ -8,6 +8,9 @@ from django.core.files.base import ContentFile
 from django.template.loader import get_template
 from django.utils.translation import gettext_lazy as _
 from num2words import num2words
+from src.base.utils import Util
+from src.account import models
+
 
 KEY = settings.KEY
 AUTHLOGIN = settings.AUTHLOGIN
@@ -18,6 +21,11 @@ UON_URL = f"https://api.u-on.ru/{KEY}/service/create.json"
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+
+def hotel_request_exists(hotel_id, user):
+    return models.RequestHotel.objects.filter(hotelid=hotel_id, user=user).exists()
+
 
 
 def update_user(data, user):
@@ -245,7 +253,7 @@ def create_service(request_number, data=None, instance=None):
 def create_lead(data, user, instance=None):
     url = f"https://api.u-on.ru/{KEY}/request/create.json"
 
-    update_user(data, user)
+    # update_user(data, user)
 
     tourid = (
         data.get("tourid")

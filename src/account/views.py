@@ -1,6 +1,7 @@
 import string
 from datetime import datetime, timedelta, timezone
 from random import choices, randint
+import os
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password
@@ -12,10 +13,12 @@ from rest_framework import generics, permissions, status, views
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
-from ..base.utils import Util
+from ..base.utils import Util, send_sms
 from .functions import *
 from .serializers import *
 from .services import *
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 class PaymentsAPIView(views.APIView):
@@ -47,15 +50,16 @@ class RegisterAPIView(generics.CreateAPIView):
             )
 
         if serializer.is_valid():
-            email = serializer.data["email"]
-            first_name = serializer.data["first_name"]
-            last_name = serializer.data["last_name"]
-            password = serializer.data["password"]
-            confirm_password = serializer.data["confirm_password"]
-            phone = serializer.data["phone"]
+            email = serializer.validated_data["email"]
+            first_name = serializer.validated_data["first_name"]
+            last_name = serializer.validated_data["last_name"]
+            password = serializer.validated_data["password"]
+            confirm_password = serializer.validated_data["confirm_password"]
+            phone = serializer.validated_data["phone"]
 
             if password != confirm_password:
                 return Response({"response": False, "password": "Пароли не совпадают."})
+            
             user = User(
                 email=email, first_name=first_name, last_name=last_name, phone=phone
             )
@@ -67,83 +71,145 @@ class RegisterAPIView(generics.CreateAPIView):
             user.verification_code = randint(100_000, 999_999)
             user.save()
 
-            email_body = (
-                f"Привет! {user.last_name} {user.first_name}\n\n"
-                f"Для подтверждения регистрации в системе введите код ниже:\n\n"
-                f"{user.verification_code}"
-            )
+            sms_message = "Ваш код подтверждения регистрации: "
+            send_sms(phone, sms_message, user.verification_code)
 
-            email_data = {
-                "email_body": email_body,
-                "email_subject": "Подтвердите регистрацию",
-                "to_email": user.email,
-            }
-
-            Util.send_email(email_data)
             add_bonuses = decrease_bonuses(user.bcard_id, 1000, "Бонус за регистрацию")
+
             return Response({"response": True}, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors)
 
 
-class VerifyEmailAPIView(views.APIView):
-    serializer_class = VerifyEmailSerializer
+
+# class VerifyEmailAPIView(views.APIView):
+#     serializer_class = VerifyPhoneSerializer
+
+#     @swagger_auto_schema(
+#         request_body=VerifyPhoneSerializer,
+#         responses={
+#             200: openapi.Response(description="Успешная верификация"),
+#             400: openapi.Response(description="Ошибки валидации"),
+#             404: openapi.Response(description="Пользователь не найден"),
+#         },
+#         operation_summary="Подтверждение телефона",
+#         operation_description="Подтверждение телефона по коду из SMS",
+#         tags=["Аутентификация"]
+#     )
+#     def post(self, request):
+#         serializer = self.serializer_class(data=request.data)
+        
+
+#         if not serializer.is_valid():
+#             phone_log_file = 'verify-phone.log'
+#             with open(phone_log_file, 'w', encoding='utf-8') as phone_log:
+#                 phone_log.write(serializer, '\n')
+#             return Response(
+#                 {"response": False, "detail": serializer.errors},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         phone = serializer.validated_data["phone"]
+#         code = serializer.validated_data["code"]
+
+#         try:
+#             user = User.objects.get(phone=phone)
+#         except ObjectDoesNotExist:
+#             return Response(
+#                 {
+#                     "response": False,
+#                     "message": "Пользователь с таким телефоном не существует",
+#                 },
+#                 status=status.HTTP_404_NOT_FOUND,
+#             )
+
+#         if user.is_verified:
+#             return Response({"message": "Аккаунт уже подтвержден"})
+
+#         if not self.is_verification_code_valid(user, code):
+#             return Response(
+#                 {"response": False, "message": "Срок действия кода истек или код неверный!"}
+#             )
+
+#         user.is_verified = True
+#         user.save()
+
+#         token, _ = Token.objects.get_or_create(user=user)
+#         return Response(
+#             {
+#                 "response": True,
+#                 "message": "Верификация прошла успешно!",
+#                 "token": token.key,
+#                 "phone": user.phone,
+#             }
+#         )
+
+#     def is_verification_code_valid(self, user, code):
+#         if user.verification_code_time:
+#             expiration_time = user.verification_code_time + timedelta(minutes=30)
+#             expiration_time = expiration_time.replace(tzinfo=timezone.utc)
+
+#             if (
+#                 datetime.now(timezone.utc) < expiration_time
+#                 and user.verification_code == code
+#             ):
+#                 return True
+
+#         user.verification_code = None
+#         user.verification_code_time = None
+#         user.save()
+#         return False
+    
+
+class VerifyPhoneView(generics.GenericAPIView):
+    serializer_class = VerifyPhoneSerializer
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
 
-        if not serializer.is_valid():
-            return Response(
-                {"response": False, "detail": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        code, email = serializer.data["code"], serializer.data["email"]
+        if serializer.is_valid():
+            code = serializer.data["code"]
+            phone = serializer.data["phone"]
 
-        try:
-            user = User.objects.get(email=email)
-        except ObjectDoesNotExist:
-            return Response(
-                {
-                    "response": False,
-                    "message": "Пользователь с таким email не существует",
-                },
-            )
-        if user.is_verified:
-            return Response({"message": "Аккаунт уже подтвержден"})
-        if not self.is_verification_code_valid(user, code):
-            return Response({"response": False, "message": "Срок действия кода истек!"})
+            with open('phones_log.txt', 'w', encoding='utf-8') as file:
+                file.write(f"📞 Номер {phone} код-подтвр: {code}", )
 
-        user.is_verified = True
-        user.save()
+            try:
+                user = User.objects.get(phone=phone)
 
-        token, _ = Token.objects.get_or_create(user=user)
+                if user.is_verified:
+                    return Response({"message": _("Аккаунт уже подтвержден")})
+
+                if user.verification_code == code:
+                    user.is_verified = True
+                    user.save()
+
+                    token, created = Token.objects.get_or_create(user=user)
+
+                    return Response(
+                        {
+                            "response": True,
+                            "message": _("Пользователь успешно зарегистрирован."),
+                            "token": token.key,
+                        }
+                    )
+                return Response(
+                    {"response": False, "message": _("Введен неверный код")}
+                )
+            except ObjectDoesNotExist:
+                return Response(
+                    {
+                        "response": False,
+                        "message": _("Пользователь с таким телефоном не существует"),
+                    }
+                )
         return Response(
-            {
-                "response": True,
-                "message": "Верификация прошла успешно!",
-                "token": token.key,
-                "email": user.email,
-            }
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
-    def is_verification_code_valid(self, user, code):
-        if user.verification_code_time:
-            expiration_time = user.verification_code_time + timedelta(minutes=30)
-            expiration_time = expiration_time.replace(tzinfo=timezone.utc)
-
-            if (
-                datetime.now(timezone.utc) < expiration_time
-                and user.verification_code == code
-            ):
-                return True
-
-        user.verification_code = None
-        user.verification_code_time = None
-        user.save()
-        return False
-
-
 class SendAgainCodeAPIView(generics.GenericAPIView):
-    serializer_class = SendAgainCodeSerializer
+    serializer_class = SendAgainCodeSerializer 
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -153,34 +219,35 @@ class SendAgainCodeAPIView(generics.GenericAPIView):
                 {"response": False, "detail": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        email = serializer.data["email"]
+
+        phone = serializer.validated_data["phone"]
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(phone=phone)
         except ObjectDoesNotExist:
             return Response(
                 {
                     "response": False,
-                    "message": "Пользователь с таким email не существует",
+                    "message": "Пользователь с таким телефоном не существует",
                 },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if user.is_verified:
-            return Response({"response": False, "message": "Аккаунт уже подтвержден"})
+            return Response(
+                {"response": False, "message": "Аккаунт уже подтвержден"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         user.verification_code = randint(100_000, 999_999)
         user.verification_code_time = datetime.now()
         user.save()
 
-        email_body = f"Ваш новый код активации:\n\n{user.verification_code}"
-        email_data = {
-            "email_body": email_body,
-            "email_subject": "Подтвердите регистрацию",
-            "to_email": user.email,
-        }
-        Util.send_email(email_data)
+        sms_message = "Ваш новый код подтверждения: "
+        send_sms(user.phone, sms_message, user.verification_code)
+
         return Response(
-            {"response": True, "message": "Код подтверждения успешно отправлен"}
+            {"response": True, "message": "Код подтверждения отправлен по SMS"}
         )
 
 

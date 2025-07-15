@@ -21,7 +21,7 @@ urlpatterns = [
     path("", include("src.search.urls")),
     path("", include("src.main.urls")),
     path("", include("src.bus_tours.urls")),
-    path("", include("src.notifications.urls")),
+    # path("", include("src.notifications.urls")),
     path("", include("src.payment.urls")),
     path("", include("src.flights.urls")),
     path("webhook/", include("src.webhooks.urls")),

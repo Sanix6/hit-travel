@@ -144,13 +144,26 @@ class BookingView(APIView):
         token = redis_client.get("token").decode("utf-8")
         parameters = request.query_params
 
-        flight_detail_url = f"{avia_center_url}/avia/flight-info?auth_key={token}&tid={parameters.get('tid')}"
-        flight_detail = requests.get(flight_detail_url).json()
-        segments = flight_detail.get("data", {}).get("search", {}).get("segments", [])
-        segments_date = (
-            flight_detail.get("data", {}).get("flight", {}).get("segments", [])
-        )
+        tid = parameters.get("tid")
+        encoded_url = urlencode(parameters)
 
+        existing_request = FlightRequest.objects.filter(
+            tid=tid,
+            status='booked'
+        ).first()
+
+        if existing_request:
+            return Response({
+                "error": "Этот билет уже забронирован. Дождитесь завершения оплаты или отмените бронирование.",
+                "flight_request_id": existing_request.id,
+                "status": existing_request.status,
+            }, status=400)
+
+        flight_detail_url = f"{avia_center_url}/avia/flight-info?auth_key={token}&tid={tid}"
+        flight_detail = requests.get(flight_detail_url).json()
+
+        segments = flight_detail.get("data", {}).get("search", {}).get("segments", [])
+        segments_date = flight_detail.get("data", {}).get("flight", {}).get("segments", [])
         partner_affiliate_fee = (
             flight_detail.get("data", {})
             .get("flight", {})
@@ -161,7 +174,8 @@ class BookingView(APIView):
         )
 
         flight_request = FlightRequest.objects.create(
-            url=urlencode(parameters),
+            url=encoded_url,
+            tid=tid,
             user=request.user,
             client_email=parameters.get("client_email"),
             client_phone=parameters.get("client_phone"),
@@ -172,9 +186,7 @@ class BookingView(APIView):
             is_baggage=flight_detail["data"]["flight"]["is_baggage"],
             provider=flight_detail["data"]["flight"]["provider"]["supplier"]["title"],
             code=flight_detail["data"]["flight"]["provider"]["supplier"]["code"],
-            flight_number=flight_detail["data"]["flight"]["segments"][0][
-                "flight_number"
-            ],
+            flight_number=flight_detail["data"]["flight"]["segments"][0]["flight_number"],
             adt=flight_detail["data"]["search"]["adt"],
             chd=flight_detail["data"]["search"]["chd"],
             inf=flight_detail["data"]["search"]["adt"],
@@ -193,15 +205,13 @@ class BookingView(APIView):
                 "age": parameters.get(f"passengers[{i}][age]"),
                 "birthdate": (
                     datetime.strptime(birthdate, "%d.%m.%Y").strftime("%Y-%m-%d")
-                    if birthdate
-                    else None
+                    if birthdate else None
                 ),
                 "doctype": parameters.get(f"passengers[{i}][doctype]"),
                 "docnum": parameters.get(f"passengers[{i}][docnum]"),
                 "docexp": (
                     datetime.strptime(docexp, "%d.%m.%Y").strftime("%Y-%m-%d")
-                    if docexp
-                    else None
+                    if docexp else None
                 ),
                 "gender": parameters.get(f"passengers[{i}][gender]"),
                 "citizen": parameters.get(f"passengers[{i}][citizen]"),
@@ -215,38 +225,29 @@ class BookingView(APIView):
                 main=flight_request,
                 from_name=segment_data.get("from", {}).get("name", ""),
                 from_iata=segment_data.get("from", {}).get("iata", ""),
-                from_country=segment_data.get("from", {})
-                .get("country", {})
-                .get("name", ""),
+                from_country=segment_data.get("from", {}).get("country", {}).get("name", ""),
                 to_name=segment_data.get("to", {}).get("name", ""),
                 to_iata=segment_data.get("to", {}).get("iata", ""),
-                to_country=segment_data.get("to", {})
-                .get("country", {})
-                .get("name", ""),
+                to_country=segment_data.get("to", {}).get("country", {}).get("name", ""),
                 date_from=date_data.get("dep", {}).get("date"),
                 date_to=date_data.get("arr", {}).get("date"),
                 time_from=date_data.get("dep", {}).get("time"),
                 time_to=date_data.get("arr", {}).get("time"),
-                duration_hour=date_data.get("duration", {})
-                .get("flight", {})
-                .get("hour"),
-                duration_minute=date_data.get("duration", {})
-                .get("flight", {})
-                .get("minute"),
+                duration_hour=date_data.get("duration", {}).get("flight", {}).get("hour"),
+                duration_minute=date_data.get("duration", {}).get("flight", {}).get("minute"),
             )
 
         amount = flight_detail["data"]["flight"]["price"]["KGS"]["amount"]
         transaction = Transaction.objects.create(
             status="processing",
             name="ticket",
-            request_id=f"{flight_request.id}",
+            request_id=str(flight_request.id),
             user=request.user,
             amount=amount,
             rid=Transaction.generate_unique_code(),
         )
-        flight_request.payler_url = (
-            f"https://sandbox.payler.com/gapi/Pay?session_id={transaction.id}"
-        )
+
+        flight_request.payler_url = f"https://sandbox.payler.com/gapi/Pay?session_id={transaction.id}"
         flight_request.transaction_id = transaction.id
         flight_request.save()
 
@@ -257,18 +258,14 @@ class BookingView(APIView):
 
         if booking_result is True:
             create_request(data=flight_request, user=request.user)
-            return Response(
-                {
-                    "response": True,
-                    "deeplink": deeplink,
-                    "amount": amount,
-                    "data": FlightsSerializer(
-                        flight_request, context={"request_type": None}
-                    ).data,
-                    "adt": flight_request.adt,
-                    "transaction_id": transaction.id,
-                }
-            )
+            return Response({
+                "response": True,
+                "deeplink": deeplink,
+                "amount": amount,
+                "data": FlightsSerializer(flight_request, context={"request_type": None}).data,
+                "adt": flight_request.adt,
+                "transaction_id": transaction.id,
+            })
         else:
             transaction.delete()
             flight_request.delete()
@@ -437,6 +434,6 @@ class Token(APIView):
     def get(self, request):
         try:
             token = get_redis_token()
-            print(f"Полученный токен: {token}")  # <-- Добавь это
+            print(f"Полученный токен: {token}") 
         except ConnectionError as e:
             return Response({"message": str(e)}, status=500)

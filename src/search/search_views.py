@@ -10,41 +10,45 @@ from src.main.models import Currency
 from .models import Countries
 from .services import *
 from .services import get_isfavorite, get_isrequested, get_requestedhotel
-from .utils import convert_currency, fetch_result_data, get_search_result
+from .utils import convert_currency, fetch_result_data, get_search_result, filter_only_charters
 
 authlogin = settings.AUTHLOGIN
 authpass = settings.AUTHPASS
-
 class SearchView(APIView):
     def get(self, request):
-
         query_params = request.query_params
         currency = query_params.get("currency")
+        direct_only = query_params.get("directOnly") == "true"  # фильтр чартеров
 
         if currency == "99":
-            usd_exchange = Currency.objects.get(currency="USD").purchase
-            eur_exchange = Currency.objects.get(currency="EUR").purchase
+            try:
+                usd_exchange = Currency.objects.get(currency="USD").purchase
+                eur_exchange = Currency.objects.get(currency="EUR").purchase
+            except Currency.DoesNotExist:
+                return Response({"error": "Currency rates not found."}, status=400)
 
             mutable_query_params = query_params.copy()
             pricefrom = int(query_params.get("pricefrom", 0))
             priceto = int(query_params.get("priceto", 0))
             page = query_params.get("page", 1)
 
+            # Преобразование в USD
             mutable_query_params["pricefrom"] = pricefrom / usd_exchange
             mutable_query_params["priceto"] = priceto / usd_exchange
             mutable_query_params["currency"] = "1"
 
-            requestid = get_search_result(
-                authlogin, authpass, mutable_query_params
-            )
+            requestid = get_search_result(authlogin, authpass, mutable_query_params)
             if not requestid:
                 return Response({"response": False}, status=400)
 
             time.sleep(6)
 
-            data = fetch_result_data(self.authlogin, self.authpass, requestid, page)
+            data = fetch_result_data(authlogin, authpass, requestid, page)
             if not data:
                 return Response({"response": False}, status=400)
+
+            if direct_only:
+                data = filter_only_charters(data)
 
             converted_data = convert_currency(data, usd_exchange, eur_exchange)
             return Response(converted_data)
@@ -60,6 +64,9 @@ class SearchView(APIView):
             data = fetch_result_data(authlogin, authpass, requestid, page)
             if not data:
                 return Response({"response": False}, status=400)
+
+            if direct_only:
+                data = filter_only_charters(data)
 
             return Response(data)
 

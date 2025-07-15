@@ -50,19 +50,30 @@ class RegisterAPIViewSerializer(serializers.ModelSerializer):
         ]
 
 
-class VerifyEmailSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    code = serializers.IntegerField()
+class VerifyPhoneSerializer(serializers.Serializer):
+    phone = serializers.CharField(
+        required=True,
+    )
+    code = serializers.IntegerField(
+        required=True
+    )
 
     class Meta:
-        fields = ["email", "code"]
+        fields = ["phone", "code"]
+
+    def validate(self, attrs):
+        phone = ''.join(filter(str.isdigit, attrs.get("phone")))
+        if not phone.startswith("+"):
+            phone = f"+{phone}"
+        attrs["phone"] = phone
+        return super().validate(attrs)
 
 
 class SendAgainCodeSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    phone = serializers.IntegerField()
 
     class Meta:
-        fields = ["email"]
+        fields = ["phone"]
 
 
 class LoginSerializer(serializers.Serializer):

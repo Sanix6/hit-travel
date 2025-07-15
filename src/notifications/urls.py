@@ -1,13 +1,12 @@
-from django.urls import include, path
-from rest_framework_nested import routers
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import NotificationView, DeviceTokenView
 
-from . import views
 
-app_name = "notification"
-
-router = routers.SimpleRouter()
-router.register(r"fcm-token", views.FCMTokenViewSet)
+router = DefaultRouter()
+router.register(r'api', NotificationView, basename='api')
+router.register(r'api', DeviceTokenView, basename='api')
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path('', include(router.urls)),
 ]

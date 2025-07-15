@@ -61,7 +61,7 @@ class MPaymentView(APIView):
     def confirm_payment(self, xml_body, xml_head, datetime_now):
         qid = xml_head.get("QID")
         try:
-            redis_client = redis.StrictRedis(host="localhost", port=6379, db=1)
+            redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
             token = redis_client.get("token").decode("utf-8")
             transaction = Transaction.objects.get(rid=xml_body.get("PARAM1"))
             if (
@@ -260,7 +260,7 @@ class PaylerCallbackView(APIView):
         if response.get("status") == "Charged":
             if transaction.name == "ticket":
                 flight_request = FlightRequest.objects.get(id=transaction.request_id)
-                redis_client = redis.StrictRedis(host="localhost", port=6379, db=1)
+                redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
                 token = redis_client.get("token").decode("utf-8")
                 ticketed(token, flight_request)
                 flight_request.status = "ticketed"

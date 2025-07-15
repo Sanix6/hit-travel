@@ -8,7 +8,7 @@ import requests
 from .models import AirProviders
 
 
-def get_redis_token(redis_host="localhost", redis_port=6379, redis_db=1):
+def get_redis_token(redis_host="localhost", redis_port=6379, redis_db=0):
     try:
         redis_client = redis.StrictRedis(host=redis_host, port=6379, db=redis_db)
         return redis_client.get("token")

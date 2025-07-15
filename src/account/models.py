@@ -123,10 +123,10 @@ class User(AbstractUser):
         self._password = raw_password
 
 
-@receiver(post_save, sender=User)
-def add_tourist(sender, instance, created, **kwargs):
-    if created:
-        add_tourist_on_user_creation(sender, instance)
+# @receiver(post_save, sender=User)
+# def add_tourist(sender, instance, created, **kwargs):
+#     if created:
+#         add_tourist_on_user_creation(sender, instance)
 
 
 class BonusHistory(models.Model):

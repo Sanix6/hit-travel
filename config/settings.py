@@ -147,12 +147,13 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
-    # 'DEFAULT_RENDERER_CLASSES': [
-    #     # 'rest_framework.renderers.JSONRenderer',
-    #     # 'rest_framework.renderers.BrowsableAPIRenderer',
-    # ]
-
+    # "DEFAULT_RENDERER_CLASSES": [
+    #     "rest_framework.renderers.BrowsableAPIRenderer",
+    #     "rest_framework.renderers.JSONRenderer",
+        
+    # ],
 }
+
 
 CORS_ALLOWED_ORIGINS = [
     # "https://hittravel.vercel.app",
@@ -223,8 +224,8 @@ AVIA_URL = os.getenv("AVIA_URL")
 AVIALOGIN = os.getenv("AVIALOGIN")
 AVIAPASS = os.getenv("AVIAPASS")
 
-ONESIGNAL_APPID = os.getenv("ONESIGNAL_APPID")
-ONESIGNAL_RESTAPI = os.getenv("ONESIGNAL_RESTAPI")
+ONE_SIGNAL_APP_ID = os.getenv("ONESIGNAL_APPID")
+ONE_SIGNAL_REST = os.getenv("ONESIGNAL_RESTAPI")
 
 NIKITA_LOGIN = os.getenv("NITKITA_LOGIN")
 NIKITA_PASSWORD = os.getenv("NITKITA_PASSWORD")
